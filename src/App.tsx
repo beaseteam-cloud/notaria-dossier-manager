@@ -8,6 +8,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Dossiers from "./pages/Dossiers";
+import DossierDetail from "./pages/DossierDetail";
 import Modeles from "./pages/Modeles";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ function AppRoutes() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="dossiers" element={<Dossiers />} />
+        <Route path="dossiers/:id" element={<DossierDetail />} />
         <Route path="modeles" element={<Modeles />} />
         <Route path="notifications" element={<div>Notifications (à implémenter)</div>} />
         <Route path="utilisateurs" element={<div>Utilisateurs (à implémenter)</div>} />
