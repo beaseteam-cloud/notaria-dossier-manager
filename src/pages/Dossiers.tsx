@@ -46,10 +46,6 @@ interface Dossier {
   procedure_modeles?: {
     nom: string;
   };
-  profiles?: {
-    nom: string;
-    prenom: string;
-  } | null;
 }
 
 export default function Dossiers() {
@@ -77,8 +73,7 @@ export default function Dossiers() {
           pourcentage_completion,
           date_creation,
           montant_frais,
-          procedure_modeles(nom),
-          profiles(nom, prenom)
+          procedure_modeles(nom)
         `)
         .order('date_creation', { ascending: false });
 
@@ -276,18 +271,13 @@ export default function Dossiers() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <div className="text-sm text-muted-foreground">
-                      {dossier.procedure_modeles?.nom && (
+                  {dossier.procedure_modeles?.nom && (
+                    <div className="pt-2 border-t">
+                      <div className="text-sm text-muted-foreground">
                         <span>Type: {dossier.procedure_modeles.nom}</span>
-                      )}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {dossier.profiles && (
-                        <span>Créé par: {dossier.profiles.prenom} {dossier.profiles.nom}</span>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </CardContent>
