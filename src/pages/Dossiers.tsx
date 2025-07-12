@@ -16,6 +16,7 @@ import {
   User,
   Euro
 } from 'lucide-react';
+import { CreateDossierDialog } from '@/components/dossiers/CreateDossierDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -164,10 +165,7 @@ export default function Dossiers() {
           </p>
         </div>
         {isCollaborateur && (
-          <Button className="notaria-gradient text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau dossier
-          </Button>
+          <CreateDossierDialog onDossierCreated={fetchDossiers} />
         )}
       </div>
 
