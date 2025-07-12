@@ -202,7 +202,10 @@ export default function Dossiers() {
                 <div className="flex-1 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground">
+                      <h3 
+                        className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => window.location.href = `/dossiers/${dossier.id}`}
+                      >
                         {dossier.nom}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
