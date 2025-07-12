@@ -54,6 +54,8 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
+      console.log('Fetching dashboard data...');
+      
       // Fetch dossiers statistics
       const { data: dossiers, error: dossiersError } = await supabase
         .from('dossiers')
@@ -68,16 +70,22 @@ export default function Dashboard() {
         `)
         .order('date_creation', { ascending: false });
 
+      console.log('Dossiers query result:', { dossiers, dossiersError });
+
       if (dossiersError) {
-        throw dossiersError;
+        console.error('Error fetching dossiers:', dossiersError);
+        // Don't throw here, just continue with empty data
       }
 
-      // Calculate stats
-      const totalDossiers = dossiers?.length || 0;
-      const dossiersEnCours = dossiers?.filter(d => d.status === 'en_cours').length || 0;
-      const dossiersTermines = dossiers?.filter(d => d.status === 'termine').length || 0;
-      const dossiersEnRetard = dossiers?.filter(d => d.status === 'en_cours' && d.pourcentage_completion < 50).length || 0;
-      const totalFrais = dossiers?.reduce((sum, d) => sum + (d.montant_frais || 0), 0) || 0;
+      // Calculate stats with empty array fallback
+      const dossiersData = dossiers || [];
+      const totalDossiers = dossiersData.length;
+      const dossiersEnCours = dossiersData.filter(d => d.status === 'en_cours').length;
+      const dossiersTermines = dossiersData.filter(d => d.status === 'termine').length;
+      const dossiersEnRetard = dossiersData.filter(d => d.status === 'en_cours' && d.pourcentage_completion < 50).length;
+      const totalFrais = dossiersData.reduce((sum, d) => sum + (d.montant_frais || 0), 0);
+
+      console.log('Calculated stats:', { totalDossiers, dossiersEnCours, dossiersTermines });
 
       // Fetch etapes en attente
       const { data: etapes, error: etapesError } = await supabase
@@ -85,8 +93,11 @@ export default function Dashboard() {
         .select('id')
         .eq('status', 'en_attente');
 
+      console.log('Etapes query result:', { etapes, etapesError });
+
       if (etapesError) {
-        throw etapesError;
+        console.error('Error fetching etapes:', etapesError);
+        // Don't throw here, just continue with empty data
       }
 
       setStats({
@@ -99,14 +110,16 @@ export default function Dashboard() {
       });
 
       // Set recent dossiers (last 5)
-      setRecentDossiers(dossiers?.slice(0, 5) || []);
+      setRecentDossiers(dossiersData.slice(0, 5));
+
+      console.log('Dashboard data loaded successfully');
 
     } catch (error: any) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error in fetchDashboardData:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de charger les données du tableau de bord",
+        description: `Impossible de charger les données du tableau de bord: ${error.message}`,
       });
     } finally {
       setLoading(false);
