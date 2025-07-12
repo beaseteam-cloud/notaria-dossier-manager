@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,8 @@ interface RecentDossier {
 }
 
 export default function Dashboard() {
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalDossiers: 0,
     dossiersEnCours: 0,
@@ -304,18 +306,29 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            <Button className="notaria-gradient text-white">
+            <Button 
+              className="notaria-gradient text-white"
+              onClick={() => navigate('/dossiers')}
+            >
               <FolderOpen className="w-4 h-4 mr-2" />
               Nouveau dossier
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/modeles')}
+            >
               <FileText className="w-4 h-4 mr-2" />
               Créer un modèle
             </Button>
-            <Button variant="outline">
-              <Users className="w-4 h-4 mr-2" />
-              Voir les utilisateurs
-            </Button>
+            {isAdmin && (
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/utilisateurs')}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Voir les utilisateurs
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
