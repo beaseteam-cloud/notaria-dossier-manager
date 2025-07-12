@@ -18,6 +18,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,6 +64,17 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Notaria specific colors
+				notaria: {
+					gold: 'hsl(var(--notaria-gold))',
+					'blue-dark': 'hsl(var(--notaria-blue-dark))',
+					'blue-light': 'hsl(var(--notaria-blue-light))',
+					'gray-light': 'hsl(var(--notaria-gray-light))',
+					'gray-medium': 'hsl(var(--notaria-gray-medium))',
+					success: 'hsl(var(--notaria-success))',
+					warning: 'hsl(var(--notaria-warning))',
+					error: 'hsl(var(--notaria-error))'
 				}
 			},
 			borderRadius: {
@@ -84,11 +98,36 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'slide-in-right': {
+					'0%': { transform: 'translateX(100%)' },
+					'100%': { transform: 'translateX(0)' }
+				},
+				'pulse-gold': {
+					'0%, 100%': {
+						boxShadow: '0 0 0 0 hsl(var(--notaria-gold) / 0.7)'
+					},
+					'50%': {
+						boxShadow: '0 0 0 10px hsl(var(--notaria-gold) / 0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'slide-in-right': 'slide-in-right 0.3s ease-out',
+				'pulse-gold': 'pulse-gold 2s infinite'
 			}
 		}
 	},

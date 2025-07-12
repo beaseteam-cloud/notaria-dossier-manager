@@ -1,58 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Notaria Design System - Professional Legal App */
 
 @layer base {
   :root {
+    /* Core colors - Professional blue and gold theme */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 25% 27%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 215 84% 44%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 215 27% 92%;
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 215 20% 96%;
+    --muted-foreground: 215 15% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 45 87% 55%;
+    --accent-foreground: 215 25% 27%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 215 20% 82%;
+    --input: 215 20% 82%;
+    --ring: 215 84% 44%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Notaria specific semantic tokens */
+    --notaria-gold: 45 87% 55%;
+    --notaria-blue-dark: 215 84% 34%;
+    --notaria-blue-light: 215 84% 54%;
+    --notaria-gray-light: 215 20% 96%;
+    --notaria-gray-medium: 215 15% 46%;
+    --notaria-success: 142 76% 36%;
+    --notaria-warning: 38 92% 50%;
+    --notaria-error: 0 84% 60%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--notaria-blue-light)));
+    --gradient-gold: linear-gradient(135deg, hsl(var(--accent)), hsl(45 77% 65%));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Shadows */
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.1);
+    --shadow-gold: 0 4px 20px -4px hsl(var(--accent) / 0.3);
+    --shadow-card: 0 2px 8px -2px hsl(215 25% 27% / 0.1);
 
+    /* Sidebar specific */
+    --sidebar-background: 215 27% 92%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 215 84% 44%;
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 215 20% 96%;
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 215 20% 82%;
+    --sidebar-ring: 215 84% 44%;
   }
 
   .dark {
@@ -100,6 +114,152 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
+}
+
+@layer components {
+  /* Card components */
+  .notaria-card {
+    @apply bg-card border border-border rounded-lg p-6 transition-all duration-200;
+    box-shadow: var(--shadow-card);
+  }
+  
+  .notaria-card:hover {
+    @apply shadow-lg;
+  }
+
+  .notaria-card-elevated {
+    box-shadow: var(--shadow-elegant);
+  }
+
+  /* Status badges */
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-en-cours {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
+  }
+  
+  .status-termine {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
+  }
+  
+  .status-suspendu {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
+  }
+  
+  .status-en-retard {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+  }
+
+  /* Etape badges */
+  .etape-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .etape-en-attente {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
+  }
+  
+  .etape-en-cours {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
+  }
+  
+  .etape-termine {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
+  }
+  
+  .etape-bloque {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+  }
+
+  /* Gradients */
+  .notaria-gradient {
+    background: var(--gradient-primary);
+  }
+  
+  .notaria-gold-gradient {
+    background: var(--gradient-gold);
+  }
+
+  /* Navigation */
+  .sidebar-link {
+    @apply flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200;
+  }
+  
+  .sidebar-link-active {
+    @apply bg-primary text-primary-foreground;
+  }
+  
+  .sidebar-link-inactive {
+    @apply text-muted-foreground hover:bg-muted hover:text-foreground;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700;
+  }
+
+  .progress-fill {
+    @apply h-2.5 rounded-full transition-all duration-300;
+    background: var(--gradient-primary);
+  }
+
+  /* Priority indicators */
+  .priority-high {
+    @apply border-l-4 border-red-500;
+  }
+
+  .priority-medium {
+    @apply border-l-4 border-yellow-500;
+  }
+
+  .priority-low {
+    @apply border-l-4 border-green-500;
+  }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--accent) / 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px hsl(var(--accent) / 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s infinite;
 }
