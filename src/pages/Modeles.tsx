@@ -47,10 +47,6 @@ interface ProcedureModele {
   actif: boolean;
   created_at: string;
   etapes_modeles?: EtapeModele[];
-  profiles?: {
-    nom: string;
-    prenom: string;
-  };
 }
 
 interface EtapeModele {
@@ -139,7 +135,6 @@ export default function Modeles() {
           description,
           actif,
           created_at,
-          profiles(nom, prenom),
           etapes_modeles(
             id,
             nom,
@@ -619,12 +614,6 @@ export default function Modeles() {
                           <Calendar className="w-3 h-3" />
                           {formatDate(modele.created_at)}
                         </span>
-                        {modele.profiles && (
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            {modele.profiles.prenom} {modele.profiles.nom}
-                          </span>
-                        )}
                         <Badge className={modele.actif ? 'status-en-cours' : 'status-suspendu'}>
                           {modele.actif ? 'Actif' : 'Inactif'}
                         </Badge>
