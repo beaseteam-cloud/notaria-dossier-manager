@@ -231,7 +231,9 @@ export default function Dossiers() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => window.location.href = `/dossiers/${dossier.id}`}
+                          >
                             <Eye className="w-4 h-4 mr-2" />
                             Voir détails
                           </DropdownMenuItem>
