@@ -437,22 +437,11 @@ export default function DossierDetail() {
       {/* Section Documents */}
       <Card className="notaria-card">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Documents du dossier</CardTitle>
-            {isCollaborateur && (
-              <FreeDocumentUpload
-                dossierId={id!}
-                onUploadSuccess={fetchDossierDetail}
-              />
-            )}
-          </div>
+          <CardTitle>Documents du dossier</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Documents attendus du modèle */}
-          {documentsAttendus.length > 0 && (
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm text-muted-foreground">Documents requis par le modèle</h4>
-              <div className="grid grid-cols-1 gap-4">
+          {documentsAttendus.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
               {documentsAttendus.map((docAttendu) => {
                 const uploaded = getUploadedDocument(docAttendu.id);
                 const etapeCorrespondante = etapes.find(e => e.etape_modele_id === docAttendu.etape_modele_id);
@@ -522,60 +511,12 @@ export default function DossierDetail() {
                 );
               })}
             </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Aucun document prévu pour ce modèle</p>
             </div>
           )}
-
-          {/* Tous les documents uploadés */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm text-muted-foreground">
-              {documentsAttendus.length > 0 ? "Autres documents" : "Documents ajoutés"}
-            </h4>
-            {documentsUploads.filter(doc => !doc.document_attendu_modele_id).length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {documentsUploads
-                  .filter(doc => !doc.document_attendu_modele_id)
-                  .map((document) => (
-                    <div key={document.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            <h4 className="font-medium">{document.nom}</h4>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Ajouté le {formatDate(document.date_upload)}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Ajouté
-                          </Badge>
-                          <DocumentViewer
-                            documentId={document.id}
-                            fileName={document.fichier_nom || document.nom}
-                            fileUrl={document.fichier_url}
-                            mimeType={document.type_mime}
-                            canDelete={true}
-                            onDeleteSuccess={fetchDossierDetail}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">
-                  {documentsAttendus.length > 0 
-                    ? "Aucun autre document ajouté" 
-                    : "Aucun document ajouté pour ce dossier"}
-                </p>
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>
