@@ -163,12 +163,20 @@ export default function DossierDetail() {
         updates.date_debut = new Date().toISOString();
       }
 
-      const { error } = await supabase
+      console.log('Updating etape status:', { etapeId, updates });
+
+      const { data: updatedEtape, error } = await supabase
         .from('etapes_dossiers')
         .update(updates)
-        .eq('id', etapeId);
+        .eq('id', etapeId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating etape:', error);
+        throw error;
+      }
+
+      console.log('Etape updated successfully:', updatedEtape);
 
       // Update local state
       setEtapes(prev => prev.map(e => 
@@ -184,14 +192,27 @@ export default function DossierDetail() {
       const totalEtapes = etapes.length;
       const newPercentage = Math.round((completedEtapes / totalEtapes) * 100);
 
-      await supabase
+      console.log('Updating dossier completion percentage:', newPercentage);
+
+      const { data: updatedDossier, error: dossierError } = await supabase
         .from('dossiers')
         .update({ pourcentage_completion: newPercentage })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
+
+      if (dossierError) {
+        console.error('Error updating dossier completion:', dossierError);
+        throw dossierError;
+      }
+
+      console.log('Dossier completion updated successfully:', updatedDossier);
+
+      // Update local dossier state
+      setDossier(prev => prev ? { ...prev, pourcentage_completion: newPercentage } : null);
 
       toast({
         title: "Étape mise à jour",
-        description: "Le statut de l'étape a été mis à jour avec succès",
+        description: `Étape "${etapes.find(e => e.id === etapeId)?.nom}" ${newStatus === 'termine' ? 'terminée' : 'mise à jour'}`,
       });
     } catch (error: any) {
       console.error('Error updating etape:', error);

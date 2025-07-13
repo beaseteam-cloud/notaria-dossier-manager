@@ -52,19 +52,39 @@ export function DocumentUpload({
       const fileExt = file.name.split('.').pop();
       const fileName = `${dossierId}/${documentAttenduId}/${Date.now()}.${fileExt}`;
       
+      console.log('Uploading file to storage:', fileName);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('File uploaded successfully:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('documents')
         .getPublicUrl(fileName);
 
+      console.log('Generated public URL:', publicUrl);
+
       // Save document record to database
-      const { error: dbError } = await supabase
+      console.log('Saving document record to database:', {
+        dossier_id: dossierId,
+        etape_dossier_id: etapeDossierId,
+        document_attendu_modele_id: documentAttenduId,
+        nom: documentNom,
+        fichier_nom: file.name,
+        fichier_url: publicUrl,
+        type_mime: file.type,
+        taille_fichier: file.size,
+        uploaded_by: user.id,
+      });
+
+      const { data: insertedDoc, error: dbError } = await supabase
         .from('documents_dossiers')
         .insert({
           dossier_id: dossierId,
@@ -76,9 +96,15 @@ export function DocumentUpload({
           type_mime: file.type,
           taille_fichier: file.size,
           uploaded_by: user.id,
-        });
+        })
+        .select();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw dbError;
+      }
+
+      console.log('Document record saved successfully:', insertedDoc);
 
       toast({
         title: "Document uploadé",
