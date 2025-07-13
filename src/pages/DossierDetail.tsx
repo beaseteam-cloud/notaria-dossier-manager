@@ -432,6 +432,90 @@ export default function DossierDetail() {
           })}
         </CardContent>
       </Card>
+
+      {/* Section Documents */}
+      <Card className="notaria-card">
+        <CardHeader>
+          <CardTitle>Documents du dossier</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {documentsAttendus.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {documentsAttendus.map((docAttendu) => {
+                const uploaded = getUploadedDocument(docAttendu.id);
+                const etapeCorrespondante = etapes.find(e => e.etape_modele_id === docAttendu.etape_modele_id);
+                
+                return (
+                  <div key={docAttendu.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          <h4 className="font-medium">{docAttendu.nom}</h4>
+                          {docAttendu.obligatoire && (
+                            <Badge variant="outline" className="text-xs">Obligatoire</Badge>
+                          )}
+                        </div>
+                        {docAttendu.description && (
+                          <p className="text-sm text-muted-foreground">{docAttendu.description}</p>
+                        )}
+                        {etapeCorrespondante && (
+                          <p className="text-xs text-muted-foreground">
+                            Étape: {etapeCorrespondante.nom}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        {uploaded ? (
+                          <>
+                            <div className="text-right">
+                              <Badge className="bg-green-100 text-green-800 mb-1">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Reçu
+                              </Badge>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(uploaded.date_upload)}
+                              </p>
+                            </div>
+                            <DocumentViewer
+                              documentId={uploaded.id}
+                              fileName={uploaded.fichier_nom || uploaded.nom}
+                              fileUrl={uploaded.fichier_url}
+                              mimeType={uploaded.type_mime}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <Badge variant="outline">
+                              <Clock className="w-3 h-3 mr-1" />
+                              En attente
+                            </Badge>
+                            {isCollaborateur && etapeCorrespondante && (
+                              <DocumentUpload
+                                dossierId={id!}
+                                etapeDossierId={etapeCorrespondante.id}
+                                documentAttenduId={docAttendu.id}
+                                documentNom={docAttendu.nom}
+                                onUploadSuccess={fetchDossierDetail}
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Aucun document requis pour ce dossier</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
