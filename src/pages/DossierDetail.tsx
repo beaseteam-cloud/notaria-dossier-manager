@@ -17,6 +17,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { DocumentUpload } from '@/components/documents/DocumentUpload';
+import { DocumentViewer } from '@/components/documents/DocumentViewer';
 
 interface DossierDetail {
   id: string;
@@ -59,8 +61,11 @@ interface DocumentDossier {
   id: string;
   nom: string;
   fichier_url?: string;
+  fichier_nom?: string;
   date_upload: string;
   document_attendu_modele_id?: string;
+  type_mime?: string;
+  taille_fichier?: number;
 }
 
 export default function DossierDetail() {
@@ -368,21 +373,32 @@ export default function DossierDetail() {
                           </div>
                           <div className="flex items-center gap-2">
                             {uploaded ? (
-                              <Badge className="bg-green-100 text-green-800">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Reçu
-                              </Badge>
+                              <>
+                                <Badge className="bg-green-100 text-green-800">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Reçu
+                                </Badge>
+                                <DocumentViewer
+                                  documentId={uploaded.id}
+                                  fileName={uploaded.fichier_nom || uploaded.nom}
+                                  fileUrl={uploaded.fichier_url}
+                                  mimeType={uploaded.type_mime}
+                                />
+                              </>
                             ) : (
                               <Badge variant="outline">
                                 <Clock className="w-3 h-3 mr-1" />
                                 En attente
                               </Badge>
                             )}
-                            {isCollaborateur && (
-                              <Button size="sm" variant="outline">
-                                <Upload className="w-3 h-3 mr-1" />
-                                Upload
-                              </Button>
+                            {isCollaborateur && !uploaded && (
+                              <DocumentUpload
+                                dossierId={id!}
+                                etapeDossierId={etape.id}
+                                documentAttenduId={docAttendu.id}
+                                documentNom={docAttendu.nom}
+                                onUploadSuccess={fetchDossierDetail}
+                              />
                             )}
                           </div>
                         </div>
