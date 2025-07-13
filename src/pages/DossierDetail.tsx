@@ -12,7 +12,8 @@ import {
   Clock, 
   FileText,
   User,
-  Calendar
+  Calendar,
+  Edit
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -20,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
 import { FreeDocumentUpload } from '@/components/documents/FreeDocumentUpload';
+import { EditDossierDialog } from '@/components/dossiers/EditDossierDialog';
 
 interface DossierDetail {
   id: string;
@@ -78,6 +80,7 @@ export default function DossierDetail() {
   const [documentsAttendus, setDocumentsAttendus] = useState<DocumentAttendu[]>([]);
   const [documentsUploads, setDocumentsUploads] = useState<DocumentDossier[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -281,20 +284,32 @@ export default function DossierDetail() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dossiers')}
-          className="h-8 w-8 p-0"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{dossier.nom}</h1>
-          <p className="text-muted-foreground">
-            {dossier.client_nom} {dossier.client_prenom}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dossiers')}
+            className="h-8 w-8 p-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{dossier.nom}</h1>
+            <p className="text-muted-foreground">
+              {dossier.client_nom} {dossier.client_prenom}
+            </p>
+          </div>
         </div>
+        {isCollaborateur && (
+          <Button
+            variant="outline"
+            onClick={() => setShowEditDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Edit className="w-4 h-4" />
+            Modifier
+          </Button>
+        )}
       </div>
 
       {/* Dossier Info Card */}
@@ -519,6 +534,14 @@ export default function DossierDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dossier Dialog */}
+      <EditDossierDialog
+        dossier={dossier}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={fetchDossierDetail}
+      />
     </div>
   );
 }
