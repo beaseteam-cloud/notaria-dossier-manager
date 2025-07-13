@@ -39,6 +39,7 @@ import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { EditModeleDialog } from '@/components/modeles/EditModeleDialog';
 
 interface ProcedureModele {
   id: string;
@@ -94,6 +95,8 @@ export default function Modeles() {
   const [searchTerm, setSearchTerm] = useState('');
   const [openModeles, setOpenModeles] = useState<{ [key: string]: boolean }>({});
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingModele, setEditingModele] = useState<ProcedureModele | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   const [newModele, setNewModele] = useState<NewModele>({
     nom: '',
@@ -623,7 +626,15 @@ export default function Modeles() {
                   
                   {isCollaborateur && (
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingModele(modele);
+                          setShowEditDialog(true);
+                        }}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="icon">
@@ -713,6 +724,14 @@ export default function Modeles() {
           </Card>
         )}
       </div>
+
+      {/* Edit Modele Dialog */}
+      <EditModeleDialog
+        modele={editingModele}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={fetchModeles}
+      />
     </div>
   );
 }

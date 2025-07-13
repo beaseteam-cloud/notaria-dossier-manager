@@ -17,6 +17,7 @@ import {
   Euro
 } from 'lucide-react';
 import { CreateDossierDialog } from '@/components/dossiers/CreateDossierDialog';
+import { EditDossierDialog } from '@/components/dossiers/EditDossierDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +56,8 @@ export default function Dossiers() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [editingDossier, setEditingDossier] = useState<Dossier | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   useEffect(() => {
     fetchDossiers();
@@ -242,7 +245,12 @@ export default function Dossiers() {
                           </DropdownMenuItem>
                           {isCollaborateur && (
                             <>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingDossier(dossier);
+                                  setShowEditDialog(true);
+                                }}
+                              >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Modifier
                               </DropdownMenuItem>
@@ -312,6 +320,14 @@ export default function Dossiers() {
           </Card>
         )}
       </div>
+
+      {/* Edit Dossier Dialog */}
+      <EditDossierDialog
+        dossier={editingDossier}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={fetchDossiers}
+      />
     </div>
   );
 }
