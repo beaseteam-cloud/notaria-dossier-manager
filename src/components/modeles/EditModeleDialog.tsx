@@ -279,6 +279,50 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
     }
   };
 
+  const addNewEtape = async () => {
+    if (!modele) return;
+
+    const nextOrdre = Math.max(...etapes.map(e => e.ordre), 0) + 1;
+    
+    try {
+      const { data, error } = await supabase
+        .from('etapes_modeles')
+        .insert({
+          procedure_modele_id: modele.id,
+          nom: `Nouvelle étape ${nextOrdre}`,
+          description: '',
+          ordre: nextOrdre,
+          nature: 'interne',
+          rappel_automatique: false,
+          delai_rappel: 1
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newEtape: EtapeModele = {
+        ...data,
+        documents_attendus_modeles: []
+      };
+
+      setEtapes(prev => [...prev, newEtape]);
+      setEditingEtape(data.id);
+
+      toast({
+        title: "Succès",
+        description: "Nouvelle étape ajoutée",
+      });
+    } catch (error: any) {
+      console.error('Error adding etape:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Erreur lors de l'ajout: ${error.message}`,
+      });
+    }
+  };
+
   if (!modele) return null;
 
   return (
@@ -329,7 +373,17 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
           {/* Étapes */}
           <Card>
             <CardHeader>
-              <CardTitle>Étapes du modèle ({etapes.length})</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Étapes du modèle ({etapes.length})
+                <Button
+                  onClick={addNewEtape}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter une étape
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="space-y-4">
