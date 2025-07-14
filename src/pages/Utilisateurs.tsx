@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Search } from "lucide-react";
+import { Plus, Edit, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { EditUserDialog } from "@/components/users/EditUserDialog";
 
@@ -32,6 +34,30 @@ export default function Utilisateurs() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
+  const { isAdmin, loading: authLoading } = useAuth();
+
+  // Vérifier si l'utilisateur est admin
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-destructive">Accès refusé</h1>
+          <p className="text-muted-foreground">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchUsers();
@@ -93,6 +119,40 @@ export default function Utilisateurs() {
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setShowEditDialog(true);
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    try {
+      // Supprimer l'utilisateur de Supabase Auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
+      
+      if (authError) {
+        throw authError;
+      }
+
+      // Supprimer le profil (cascade delete devrait s'en occuper, mais on peut être explicite)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", user.user_id);
+
+      if (profileError) {
+        console.warn("Erreur lors de la suppression du profil:", profileError);
+      }
+
+      fetchUsers();
+      toast({
+        title: "Succès",
+        description: "Utilisateur supprimé avec succès",
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression:", error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de supprimer l'utilisateur",
+        variant: "destructive",
+      });
+    }
   };
 
   const getRoleBadge = (role: string) => {
@@ -185,13 +245,36 @@ export default function Utilisateurs() {
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>{getStatusBadge(user.actif)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Êtes-vous sûr de vouloir supprimer l'utilisateur {user.prenom} {user.nom} ? Cette action est irréversible.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteUser(user)}>
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

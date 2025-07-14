@@ -36,6 +36,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     telephone: "",
     role: "clerc" as "admin" | "collaborateur" | "clerc",
     actif: true,
+    password: "",
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -49,6 +50,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
         telephone: user.telephone || "",
         role: user.role as "admin" | "collaborateur" | "clerc",
         actif: user.actif,
+        password: "",
       });
     }
   }, [user]);
@@ -58,6 +60,30 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     setLoading(true);
 
     try {
+      // Mettre à jour le mot de passe si fourni
+      if (formData.password) {
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(
+          user.user_id,
+          { password: formData.password }
+        );
+
+        if (passwordError) {
+          throw passwordError;
+        }
+      }
+
+      // Mettre à jour l'email dans Supabase Auth si changé
+      if (formData.email !== user.email) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          user.user_id,
+          { email: formData.email }
+        );
+
+        if (authError) {
+          throw authError;
+        }
+      }
+
       // Mettre à jour le profil utilisateur
       const { error: profileError } = await supabase
         .from("profiles")
@@ -133,6 +159,16 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               type="tel"
               value={formData.telephone}
               onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Nouveau mot de passe (optionnel)</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Laisser vide pour ne pas changer"
             />
           </div>
           <div className="space-y-2">
