@@ -283,6 +283,19 @@ export default function DossierDetail() {
     }
   };
 
+  const getDossierStatusBadge = (status: string) => {
+    switch (status) {
+      case 'termine':
+        return <Badge className="bg-green-100 text-green-800">Terminé</Badge>;
+      case 'en_cours':
+        return <Badge className="bg-blue-100 text-blue-800">En cours</Badge>;
+      case 'suspendu':
+        return <Badge className="bg-yellow-100 text-yellow-800">Suspendu</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('fr-FR');
@@ -369,17 +382,21 @@ export default function DossierDetail() {
               <FileText className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm">{dossier.procedure_modeles?.nom}</span>
             </div>
-            {dossier.montant_frais && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR',
-                  }).format(dossier.montant_frais)}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Statut:</span>
+              {getDossierStatusBadge(dossier.status)}
+            </div>
           </div>
+          {dossier.montant_frais && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm">
+                {new Intl.NumberFormat('fr-FR', {
+                  style: 'currency',
+                  currency: 'EUR',
+                }).format(dossier.montant_frais)}
+              </span>
+            </div>
+          )}
           {dossier.description && (
             <p className="text-sm text-muted-foreground">{dossier.description}</p>
           )}
