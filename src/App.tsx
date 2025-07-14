@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Dossiers from "./pages/Dossiers";
 import DossierDetail from "./pages/DossierDetail";
 import Modeles from "./pages/Modeles";
+import Utilisateurs from "./pages/Utilisateurs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,7 +41,7 @@ function AppRoutes() {
         <Route path="dossiers/:id" element={<DossierDetail />} />
         <Route path="modeles" element={<Modeles />} />
         <Route path="notifications" element={<div>Notifications (à implémenter)</div>} />
-        <Route path="utilisateurs" element={<div>Utilisateurs (à implémenter)</div>} />
+        <Route path="utilisateurs" element={<Utilisateurs />} />
         <Route path="rapports" element={<div>Rapports (à implémenter)</div>} />
         <Route path="parametres" element={<div>Paramètres (à implémenter)</div>} />
       </Route>
