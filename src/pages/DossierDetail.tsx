@@ -188,9 +188,17 @@ export default function DossierDetail() {
     const newPercentage = calculateProgressionPercentage();
     
     try {
+      const updateData: any = { pourcentage_completion: newPercentage };
+      
+      // Si le dossier atteint 100%, le marquer comme terminé
+      if (newPercentage === 100 && dossier?.status !== 'termine') {
+        updateData.status = 'termine';
+        updateData.date_fin = new Date().toISOString();
+      }
+
       const { data: updatedDossier, error: dossierError } = await supabase
         .from('dossiers')
-        .update({ pourcentage_completion: newPercentage })
+        .update(updateData)
         .eq('id', id)
         .select();
 
@@ -200,7 +208,15 @@ export default function DossierDetail() {
       }
 
       // Update local dossier state
-      setDossier(prev => prev ? { ...prev, pourcentage_completion: newPercentage } : null);
+      setDossier(prev => prev ? { ...prev, ...updateData } : null);
+      
+      // Afficher un message de succès si le dossier est terminé
+      if (newPercentage === 100 && dossier?.status !== 'termine') {
+        toast({
+          title: "Dossier terminé",
+          description: "Le dossier a été marqué comme terminé automatiquement.",
+        });
+      }
     } catch (error) {
       console.error('Error updating progression:', error);
     }
