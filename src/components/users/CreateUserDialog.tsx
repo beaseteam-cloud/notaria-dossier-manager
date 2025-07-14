@@ -48,20 +48,19 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated }: CreateUs
       }
 
       if (authData.user) {
-        // Créer le profil utilisateur
+        // Attendre un peu pour que le trigger se déclenche
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Mettre à jour le profil avec les informations complètes
         const { error: profileError } = await supabase
           .from("profiles")
-          .insert({
-            user_id: authData.user.id,
-            email: formData.email,
-            nom: formData.nom,
-            prenom: formData.prenom,
+          .update({
             telephone: formData.telephone || null,
-            role: formData.role,
-          });
+          })
+          .eq("user_id", authData.user.id);
 
         if (profileError) {
-          throw profileError;
+          console.warn("Erreur lors de la mise à jour du profil:", profileError);
         }
 
         // Réinitialiser le formulaire
