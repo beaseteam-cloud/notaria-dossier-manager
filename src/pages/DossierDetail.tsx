@@ -157,6 +157,55 @@ export default function DossierDetail() {
     }
   };
 
+  // Effect pour recalculer la progression quand les données changent
+  useEffect(() => {
+    if (etapes.length > 0 && documentsAttendus.length > 0 && dossier) {
+      updateDossierProgression();
+    }
+  }, [etapes, documentsAttendus, documentsUploads]);
+
+  const calculateProgressionPercentage = () => {
+    // Compter les étapes terminées
+    const completedEtapes = etapes.filter(e => e.status === 'termine').length;
+    const totalEtapes = etapes.length;
+    
+    // Compter les documents obligatoires uploadés
+    const documentsObligatoires = documentsAttendus.filter(doc => doc.obligatoire);
+    const documentsObligatoiresUploades = documentsObligatoires.filter(doc => 
+      documentsUploads.some(upload => upload.document_attendu_modele_id === doc.id)
+    ).length;
+    
+    // Compter le total d'éléments à compléter (étapes + documents obligatoires)
+    const totalElements = totalEtapes + documentsObligatoires.length;
+    const elementsCompletes = completedEtapes + documentsObligatoiresUploades;
+    
+    // Calculer le pourcentage
+    if (totalElements === 0) return 0;
+    return Math.round((elementsCompletes / totalElements) * 100);
+  };
+
+  const updateDossierProgression = async () => {
+    const newPercentage = calculateProgressionPercentage();
+    
+    try {
+      const { data: updatedDossier, error: dossierError } = await supabase
+        .from('dossiers')
+        .update({ pourcentage_completion: newPercentage })
+        .eq('id', id)
+        .select();
+
+      if (dossierError) {
+        console.error('Error updating dossier completion:', dossierError);
+        throw dossierError;
+      }
+
+      // Update local dossier state
+      setDossier(prev => prev ? { ...prev, pourcentage_completion: newPercentage } : null);
+    } catch (error) {
+      console.error('Error updating progression:', error);
+    }
+  };
+
   const updateEtapeStatus = async (etapeId: string, newStatus: string) => {
     try {
       const updates: any = { status: newStatus };
@@ -166,8 +215,6 @@ export default function DossierDetail() {
       } else if (newStatus === 'en_cours') {
         updates.date_debut = new Date().toISOString();
       }
-
-      console.log('Updating etape status:', { etapeId, updates });
 
       const { data: updatedEtape, error } = await supabase
         .from('etapes_dossiers')
@@ -180,39 +227,18 @@ export default function DossierDetail() {
         throw error;
       }
 
-      console.log('Etape updated successfully:', updatedEtape);
-
       // Update local state
-      setEtapes(prev => prev.map(e => 
-        e.id === etapeId 
-          ? { ...e, ...updates }
-          : e
-      ));
+      setEtapes(prev => {
+        const newEtapes = prev.map(e => 
+          e.id === etapeId 
+            ? { ...e, ...updates }
+            : e
+        );
+        return newEtapes;
+      });
 
-      // Recalculate completion percentage
-      const completedEtapes = etapes.filter(e => 
-        e.status === 'termine' || (e.id === etapeId && newStatus === 'termine')
-      ).length;
-      const totalEtapes = etapes.length;
-      const newPercentage = Math.round((completedEtapes / totalEtapes) * 100);
-
-      console.log('Updating dossier completion percentage:', newPercentage);
-
-      const { data: updatedDossier, error: dossierError } = await supabase
-        .from('dossiers')
-        .update({ pourcentage_completion: newPercentage })
-        .eq('id', id)
-        .select();
-
-      if (dossierError) {
-        console.error('Error updating dossier completion:', dossierError);
-        throw dossierError;
-      }
-
-      console.log('Dossier completion updated successfully:', updatedDossier);
-
-      // Update local dossier state
-      setDossier(prev => prev ? { ...prev, pourcentage_completion: newPercentage } : null);
+      // Update progression after state change
+      setTimeout(() => updateDossierProgression(), 100);
 
       toast({
         title: "Étape mise à jour",
@@ -434,7 +460,9 @@ export default function DossierDetail() {
                                 etapeDossierId={etape.id}
                                 documentAttenduId={docAttendu.id}
                                 documentNom={docAttendu.nom}
-                                onUploadSuccess={fetchDossierDetail}
+                                onUploadSuccess={() => {
+                                  fetchDossierDetail();
+                                }}
                               />
                             )}
                           </div>
