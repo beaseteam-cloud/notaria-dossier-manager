@@ -25,9 +25,31 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
     if (!fileUrl) return;
 
     try {
-      // Create download link
+      // Extract file path from the stored URL
+      const urlParts = fileUrl.split('/');
+      const bucketIndex = urlParts.findIndex(part => part === 'documents');
+      
+      if (bucketIndex === -1 || bucketIndex >= urlParts.length - 1) {
+        throw new Error('Invalid file URL format');
+      }
+      
+      const filePath = urlParts.slice(bucketIndex + 1).join('/');
+      
+      // Create signed URL for download (valid for 1 hour)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600, {
+          download: true
+        });
+
+      if (signedUrlError) {
+        console.error('Error creating signed URL:', signedUrlError);
+        throw signedUrlError;
+      }
+
+      // Create download link with signed URL
       const link = document.createElement('a');
-      link.href = fileUrl;
+      link.href = signedUrlData.signedUrl;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
@@ -38,6 +60,7 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
         description: `Téléchargement de ${fileName}`,
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         variant: "destructive",
         title: "Erreur de téléchargement",
