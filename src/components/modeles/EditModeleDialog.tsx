@@ -93,6 +93,80 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
     }
   }, [modele]);
 
+  const syncDossiersWithModele = async (modeleId: string) => {
+    try {
+      // Get all dossiers using this modele
+      const { data: dossiers, error: dossiersError } = await supabase
+        .from('dossiers')
+        .select('id')
+        .eq('procedure_modele_id', modeleId);
+
+      if (dossiersError) throw dossiersError;
+
+      for (const dossier of dossiers || []) {
+        // Get existing etapes for this dossier
+        const { data: existingEtapes, error: existingEtapesError } = await supabase
+          .from('etapes_dossiers')
+          .select('*')
+          .eq('dossier_id', dossier.id);
+
+        if (existingEtapesError) throw existingEtapesError;
+
+        // Update or create etapes based on the modele
+        for (const etapeModele of etapes) {
+          const existingEtape = existingEtapes?.find(e => e.etape_modele_id === etapeModele.id);
+
+          if (existingEtape) {
+            // Update existing etape
+            const { error: updateError } = await supabase
+              .from('etapes_dossiers')
+              .update({
+                nom: etapeModele.nom,
+                description: etapeModele.description,
+                ordre: etapeModele.ordre,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingEtape.id);
+
+            if (updateError) throw updateError;
+          } else {
+            // Create new etape
+            const { error: insertError } = await supabase
+              .from('etapes_dossiers')
+              .insert({
+                dossier_id: dossier.id,
+                etape_modele_id: etapeModele.id,
+                nom: etapeModele.nom,
+                description: etapeModele.description,
+                ordre: etapeModele.ordre,
+                status: 'en_attente'
+              });
+
+            if (insertError) throw insertError;
+          }
+        }
+
+        // Remove etapes that no longer exist in the modele
+        const modeleEtapeIds = etapes.map(e => e.id);
+        const etapesToDelete = existingEtapes?.filter(e => !modeleEtapeIds.includes(e.etape_modele_id));
+
+        for (const etapeToDelete of etapesToDelete || []) {
+          const { error: deleteError } = await supabase
+            .from('etapes_dossiers')
+            .delete()
+            .eq('id', etapeToDelete.id);
+
+          if (deleteError) throw deleteError;
+        }
+      }
+
+      return { success: true, count: dossiers?.length || 0 };
+    } catch (error) {
+      console.error('Error syncing dossiers:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!modele || !formData.nom.trim()) {
       toast({
@@ -154,9 +228,12 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
         }
       }
 
+      // Synchronize all dossiers using this modele
+      const syncResult = await syncDossiersWithModele(modele.id);
+
       toast({
         title: "Succès",
-        description: "Modèle mis à jour avec succès",
+        description: `Modèle mis à jour avec succès. ${syncResult.count} dossier(s) synchronisé(s).`,
       });
 
       onOpenChange(false);
