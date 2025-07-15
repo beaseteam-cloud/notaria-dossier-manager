@@ -24,24 +24,23 @@ serve(async (req) => {
       }
     )
 
+    // Create a regular client to verify the requester is an admin
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    )
+
     // Get the authorization header
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
       throw new Error('No authorization header')
     }
 
-    // Create a regular client with the JWT
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
-    )
+    // Set the auth header for the regular client
+    supabase.auth.setSession({
+      access_token: authHeader.replace('Bearer ', ''),
+      refresh_token: '',
+    })
 
     // Verify the user is an admin
     const { data: { user } } = await supabase.auth.getUser()
@@ -63,41 +62,15 @@ serve(async (req) => {
 
     switch (action) {
       case 'delete':
-        // Delete all user-related data before deleting the user
-        
-        // Delete notifications
-        await supabaseAdmin
-          .from('notifications')
-          .delete()
-          .eq('user_id', userId)
-        
-        // Delete dossier participants
-        await supabaseAdmin
-          .from('dossier_participants')
-          .delete()
-          .eq('user_id', userId)
-        
-        // Update dossiers to remove assignee references
-        await supabaseAdmin
-          .from('etapes_dossiers')
-          .update({ assignee_id: null })
-          .eq('assignee_id', userId)
-        
-        // Delete activity logs
-        await supabaseAdmin
-          .from('activity_logs')
-          .delete()
-          .eq('user_id', userId)
-        
-        // Delete profile
+        // Delete user from auth
+        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+        if (deleteError) throw deleteError
+
+        // Delete profile (should cascade)
         await supabaseAdmin
           .from('profiles')
           .delete()
           .eq('user_id', userId)
-        
-        // Finally, delete user from auth
-        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
-        if (deleteError) throw deleteError
 
         return new Response(
           JSON.stringify({ success: true, message: 'User deleted successfully' }),

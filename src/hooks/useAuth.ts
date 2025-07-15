@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface Profile {
   id: string;
@@ -20,16 +21,30 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer Supabase calls to prevent deadlock
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
+          // Fetch user profile
+          setTimeout(async () => {
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              if (error) {
+                console.error('Error fetching profile:', error);
+              } else {
+                setProfile(profileData);
+              }
+            } catch (error) {
+              console.error('Error in profile fetch:', error);
+            }
           }, 0);
         } else {
           setProfile(null);
@@ -39,7 +54,7 @@ export function useAuth() {
       }
     );
 
-    // THEN check for existing session
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -51,24 +66,6 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
-      } else {
-        setProfile(profileData);
-      }
-    } catch (error) {
-      console.error('Error in profile fetch:', error);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -77,13 +74,21 @@ export function useAuth() {
       });
       
       if (error) {
-        console.error('Erreur de connexion:', error.message);
+        toast({
+          variant: "destructive",
+          title: "Erreur de connexion",
+          description: error.message,
+        });
         return { error };
       }
       
       return { error: null };
     } catch (error: any) {
-      console.error('Erreur de connexion:', error.message);
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion",
+        description: error.message,
+      });
       return { error };
     }
   };
@@ -106,15 +111,26 @@ export function useAuth() {
       });
       
       if (error) {
-        console.error('Erreur d\'inscription:', error.message);
+        toast({
+          variant: "destructive",
+          title: "Erreur d'inscription",
+          description: error.message,
+        });
         return { error };
       }
       
-      console.log('Compte créé - Vérifiez votre email pour confirmer votre compte.');
+      toast({
+        title: "Compte créé",
+        description: "Vérifiez votre email pour confirmer votre compte.",
+      });
       
       return { error: null };
     } catch (error: any) {
-      console.error('Erreur d\'inscription:', error.message);
+      toast({
+        variant: "destructive",
+        title: "Erreur d'inscription",
+        description: error.message,
+      });
       return { error };
     }
   };
@@ -124,7 +140,11 @@ export function useAuth() {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('Erreur de déconnexion:', error.message);
+        toast({
+          variant: "destructive",
+          title: "Erreur de déconnexion",
+          description: error.message,
+        });
         return { error };
       }
       
@@ -134,7 +154,11 @@ export function useAuth() {
       
       return { error: null };
     } catch (error: any) {
-      console.error('Erreur de déconnexion:', error.message);
+      toast({
+        variant: "destructive",
+        title: "Erreur de déconnexion",
+        description: error.message,
+      });
       return { error };
     }
   };
