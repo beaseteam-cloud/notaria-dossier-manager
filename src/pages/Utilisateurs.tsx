@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { EditUserDialog } from "@/components/users/EditUserDialog";
@@ -33,7 +32,7 @@ export default function Utilisateurs() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const { toast } = useToast();
+  // const { toast } = useToast(); // Temporairement désactivé
   const { isAdmin, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -87,11 +86,7 @@ export default function Utilisateurs() {
       setUsers(data || []);
     } catch (error) {
       console.error("Erreur lors du chargement des utilisateurs:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les utilisateurs",
-        variant: "destructive",
-      });
+      console.log("Erreur: Impossible de charger les utilisateurs");
     } finally {
       setLoading(false);
     }
@@ -100,20 +95,14 @@ export default function Utilisateurs() {
   const handleUserCreated = () => {
     fetchUsers();
     setShowCreateDialog(false);
-    toast({
-      title: "Succès",
-      description: "Utilisateur créé avec succès",
-    });
+    console.log("Succès: Utilisateur créé avec succès");
   };
 
   const handleUserUpdated = () => {
     fetchUsers();
     setShowEditDialog(false);
     setSelectedUser(null);
-    toast({
-      title: "Succès",
-      description: "Utilisateur modifié avec succès",
-    });
+    console.log("Succès: Utilisateur modifié avec succès");
   };
 
   const handleEditUser = (user: User) => {
@@ -147,17 +136,10 @@ export default function Utilisateurs() {
       }
 
       fetchUsers();
-      toast({
-        title: "Succès",
-        description: "Utilisateur supprimé avec succès",
-      });
+      console.log("Succès: Utilisateur supprimé avec succès");
     } catch (error: any) {
       console.error("Erreur lors de la suppression:", error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de supprimer l'utilisateur",
-        variant: "destructive",
-      });
+      console.log("Erreur:", error.message || "Impossible de supprimer l'utilisateur");
     }
   };
 
