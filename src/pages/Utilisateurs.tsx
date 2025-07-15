@@ -178,21 +178,13 @@ function UtilisateursContent({
 
   const handleDeleteUser = async (user: User) => {
     try {
-      // Supprimer l'utilisateur de Supabase Auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
-      
-      if (authError) {
-        throw authError;
-      }
+      // Appeler l'Edge Function pour supprimer l'utilisateur
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: user.user_id }
+      });
 
-      // Supprimer le profil (cascade delete devrait s'en occuper, mais on peut être explicite)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", user.user_id);
-
-      if (profileError) {
-        console.warn("Erreur lors de la suppression du profil:", profileError);
+      if (error) {
+        throw error;
       }
 
       fetchUsers();
