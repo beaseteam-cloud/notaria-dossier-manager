@@ -63,15 +63,41 @@ serve(async (req) => {
 
     switch (action) {
       case 'delete':
-        // Delete user from auth
-        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
-        if (deleteError) throw deleteError
-
-        // Delete profile (should cascade)
+        // Delete all user-related data before deleting the user
+        
+        // Delete notifications
+        await supabaseAdmin
+          .from('notifications')
+          .delete()
+          .eq('user_id', userId)
+        
+        // Delete dossier participants
+        await supabaseAdmin
+          .from('dossier_participants')
+          .delete()
+          .eq('user_id', userId)
+        
+        // Update dossiers to remove assignee references
+        await supabaseAdmin
+          .from('etapes_dossiers')
+          .update({ assignee_id: null })
+          .eq('assignee_id', userId)
+        
+        // Delete activity logs
+        await supabaseAdmin
+          .from('activity_logs')
+          .delete()
+          .eq('user_id', userId)
+        
+        // Delete profile
         await supabaseAdmin
           .from('profiles')
           .delete()
           .eq('user_id', userId)
+        
+        // Finally, delete user from auth
+        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+        if (deleteError) throw deleteError
 
         return new Response(
           JSON.stringify({ success: true, message: 'User deleted successfully' }),
