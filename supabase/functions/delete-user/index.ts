@@ -64,9 +64,18 @@ serve(async (req) => {
       .from('profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    if (profileError) {
+      console.error('Error fetching profile:', profileError)
+      return new Response(
+        JSON.stringify({ error: 'Error checking permissions' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!profile || profile.role !== 'admin') {
+      console.log('User role:', profile?.role, 'User ID:', user.id)
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
