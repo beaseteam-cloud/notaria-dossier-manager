@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback } from "react"
 
 import type {
   ToastActionElement,
@@ -15,12 +15,9 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const
+interface State {
+  toasts: ToasterToast[]
+}
 
 let count = 0
 
@@ -29,166 +26,67 @@ function genId() {
   return count.toString()
 }
 
-type ActionType = typeof actionTypes
-
-type Action =
-  | {
-      type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"]
-      toast: Partial<ToasterToast>
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
-
-interface State {
-  toasts: ToasterToast[]
-}
-
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-
-export const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case "ADD_TOAST":
-      return {
-        ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
-      }
-
-    case "UPDATE_TOAST":
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
-        ),
-      }
-
-    case "DISMISS_TOAST": {
-      const { toastId } = action
-
-      if (toastId) {
-        const timeout = setTimeout(() => {
-          toastTimeouts.delete(toastId)
-        }, TOAST_REMOVE_DELAY)
-        toastTimeouts.set(toastId, timeout)
-      } else {
-        state.toasts.forEach((toast) => {
-          const timeout = setTimeout(() => {
-            toastTimeouts.delete(toast.id)
-          }, TOAST_REMOVE_DELAY)
-          toastTimeouts.set(toast.id, timeout)
-        })
-      }
-
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t
-        ),
-      }
-    }
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        }
-      }
-      return {
-        ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
-      }
-  }
-}
-
-type Toast = Omit<ToasterToast, "id">
-
-// Global state for standalone toast function
-let globalState: State = { toasts: [] }
-const globalListeners: Array<(state: State) => void> = []
-
-function globalDispatch(action: Action) {
-  globalState = reducer(globalState, action)
-  globalListeners.forEach((listener) => {
-    listener(globalState)
-  })
-}
-
-function toast({ ...props }: Toast) {
-  const id = genId()
-
-  const update = (props: ToasterToast) =>
-    globalDispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    })
-  const dismiss = () => globalDispatch({ type: "DISMISS_TOAST", toastId: id })
-
-  globalDispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
-    },
-  })
-
-  return {
-    id: id,
-    dismiss,
-    update,
-  }
-}
-
 function useToast() {
-  const [state, setState] = useState<State>(globalState)
+  const [toasts, setToasts] = useState<ToasterToast[]>([])
 
-  const dispatch = useCallback((action: Action) => {
-    globalDispatch(action)
-  }, [])
+  const toast = useCallback(({ title, description, variant, ...props }: Omit<ToasterToast, "id">) => {
+    const id = genId()
+    
+    const newToast: ToasterToast = {
+      id,
+      title,
+      description,
+      variant,
+      open: true,
+      ...props,
+    }
 
-  const toastFn = useCallback(({ ...props }: Toast) => {
-    return toast(props)
+    setToasts((prevToasts) => [newToast, ...prevToasts].slice(0, TOAST_LIMIT))
+
+    const dismiss = () => {
+      setToasts((prevToasts) => prevToasts.filter(t => t.id !== id))
+    }
+
+    // Auto dismiss after delay
+    setTimeout(() => {
+      dismiss()
+    }, TOAST_REMOVE_DELAY)
+
+    return {
+      id,
+      dismiss,
+      update: (props: Partial<ToasterToast>) => {
+        setToasts((prevToasts) => 
+          prevToasts.map(t => t.id === id ? { ...t, ...props } : t)
+        )
+      },
+    }
   }, [])
 
   const dismiss = useCallback((toastId?: string) => {
-    dispatch({ type: "DISMISS_TOAST", toastId })
-  }, [dispatch])
-
-  // Subscribe to global state changes
-  useEffect(() => {
-    const listener = (newState: State) => {
-      setState(newState)
-    }
-    globalListeners.push(listener)
-    return () => {
-      const index = globalListeners.indexOf(listener)
-      if (index > -1) {
-        globalListeners.splice(index, 1)
-      }
+    if (toastId) {
+      setToasts((prevToasts) => prevToasts.filter(t => t.id !== toastId))
+    } else {
+      setToasts([])
     }
   }, [])
 
   return {
-    ...state,
-    toast: toastFn,
+    toasts,
+    toast,
     dismiss,
+  }
+}
+
+// Standalone toast function for backwards compatibility
+function toast({ title, description, variant, ...props }: Omit<ToasterToast, "id">) {
+  // This is a simplified version that just logs to console for now
+  console.log('Toast:', { title, description, variant })
+  
+  return {
+    id: genId(),
+    dismiss: () => {},
+    update: () => {},
   }
 }
 
