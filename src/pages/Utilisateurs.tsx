@@ -123,21 +123,27 @@ export default function Utilisateurs() {
 
   const handleDeleteUser = async (user: User) => {
     try {
-      // Supprimer l'utilisateur de Supabase Auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
-      
-      if (authError) {
-        throw authError;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
       }
 
-      // Supprimer le profil (cascade delete devrait s'en occuper, mais on peut être explicite)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", user.user_id);
+      const response = await fetch(`https://joygrdtepsicsduvbazm.supabase.co/functions/v1/manage-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'delete',
+          userId: user.user_id
+        })
+      });
 
-      if (profileError) {
-        console.warn("Erreur lors de la suppression du profil:", profileError);
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
       }
 
       fetchUsers();
