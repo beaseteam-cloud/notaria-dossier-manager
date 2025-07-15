@@ -36,7 +36,7 @@ export default function Utilisateurs() {
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
-  // Vérifier si l'utilisateur est admin
+  // Affichage conditionnel basé sur l'état d'authentification
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -58,6 +58,61 @@ export default function Utilisateurs() {
       </div>
     );
   }
+
+  return <UtilisateursContent 
+    users={users} 
+    setUsers={setUsers}
+    filteredUsers={filteredUsers}
+    setFilteredUsers={setFilteredUsers}
+    searchTerm={searchTerm}
+    setSearchTerm={setSearchTerm}
+    loading={loading}
+    setLoading={setLoading}
+    selectedUser={selectedUser}
+    setSelectedUser={setSelectedUser}
+    showCreateDialog={showCreateDialog}
+    setShowCreateDialog={setShowCreateDialog}
+    showEditDialog={showEditDialog}
+    setShowEditDialog={setShowEditDialog}
+    toast={toast}
+  />;
+}
+
+interface UtilisateursContentProps {
+  users: User[];
+  setUsers: (users: User[]) => void;
+  filteredUsers: User[];
+  setFilteredUsers: (users: User[]) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  selectedUser: User | null;
+  setSelectedUser: (user: User | null) => void;
+  showCreateDialog: boolean;
+  setShowCreateDialog: (show: boolean) => void;
+  showEditDialog: boolean;
+  setShowEditDialog: (show: boolean) => void;
+  toast: any;
+}
+
+function UtilisateursContent({
+  users,
+  setUsers,
+  filteredUsers,
+  setFilteredUsers,
+  searchTerm,
+  setSearchTerm,
+  loading,
+  setLoading,
+  selectedUser,
+  setSelectedUser,
+  showCreateDialog,
+  setShowCreateDialog,
+  showEditDialog,
+  setShowEditDialog,
+  toast
+}: UtilisateursContentProps) {
 
   useEffect(() => {
     fetchUsers();
