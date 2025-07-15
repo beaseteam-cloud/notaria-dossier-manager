@@ -36,6 +36,19 @@ export default function Utilisateurs() {
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const filtered = users.filter(user => 
+      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [users, searchTerm]);
+
   // Vérifier si l'utilisateur est admin
   if (authLoading) {
     return (
@@ -58,19 +71,6 @@ export default function Utilisateurs() {
       </div>
     );
   }
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const filtered = users.filter(user => 
-      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [users, searchTerm]);
 
   const fetchUsers = async () => {
     try {
