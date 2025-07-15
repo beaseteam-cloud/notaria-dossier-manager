@@ -1,4 +1,4 @@
-import * as React from "react"
+import { useState, useCallback, useEffect } from "react"
 
 import type {
   ToastActionElement,
@@ -77,14 +77,12 @@ export const reducer = (state: State, action: Action): State => {
       if (toastId) {
         const timeout = setTimeout(() => {
           toastTimeouts.delete(toastId)
-          // Will be handled by the component
         }, TOAST_REMOVE_DELAY)
         toastTimeouts.set(toastId, timeout)
       } else {
         state.toasts.forEach((toast) => {
           const timeout = setTimeout(() => {
             toastTimeouts.delete(toast.id)
-            // Will be handled by the component
           }, TOAST_REMOVE_DELAY)
           toastTimeouts.set(toast.id, timeout)
         })
@@ -116,30 +114,30 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
-const listeners: Array<(state: State) => void> = []
+type Toast = Omit<ToasterToast, "id">
 
-let memoryState: State = { toasts: [] }
+// Global state for standalone toast function
+let globalState: State = { toasts: [] }
+const globalListeners: Array<(state: State) => void> = []
 
-function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
+function globalDispatch(action: Action) {
+  globalState = reducer(globalState, action)
+  globalListeners.forEach((listener) => {
+    listener(globalState)
   })
 }
-
-type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
-    dispatch({
+    globalDispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  const dismiss = () => globalDispatch({ type: "DISMISS_TOAST", toastId: id })
 
-  dispatch({
+  globalDispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
@@ -159,22 +157,38 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
+  const [state, setState] = useState<State>(globalState)
 
-  React.useEffect(() => {
-    listeners.push(setState)
+  const dispatch = useCallback((action: Action) => {
+    globalDispatch(action)
+  }, [])
+
+  const toastFn = useCallback(({ ...props }: Toast) => {
+    return toast(props)
+  }, [])
+
+  const dismiss = useCallback((toastId?: string) => {
+    dispatch({ type: "DISMISS_TOAST", toastId })
+  }, [dispatch])
+
+  // Subscribe to global state changes
+  useEffect(() => {
+    const listener = (newState: State) => {
+      setState(newState)
+    }
+    globalListeners.push(listener)
     return () => {
-      const index = listeners.indexOf(setState)
+      const index = globalListeners.indexOf(listener)
       if (index > -1) {
-        listeners.splice(index, 1)
+        globalListeners.splice(index, 1)
       }
     }
   }, [])
 
   return {
     ...state,
-    toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    toast: toastFn,
+    dismiss,
   }
 }
 
