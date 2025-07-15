@@ -24,23 +24,24 @@ serve(async (req) => {
       }
     )
 
-    // Create a regular client to verify the requester is an admin
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    )
-
     // Get the authorization header
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
       throw new Error('No authorization header')
     }
 
-    // Set the auth header for the regular client
-    supabase.auth.setSession({
-      access_token: authHeader.replace('Bearer ', ''),
-      refresh_token: '',
-    })
+    // Create a regular client with the JWT
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
+    )
 
     // Verify the user is an admin
     const { data: { user } } = await supabase.auth.getUser()
