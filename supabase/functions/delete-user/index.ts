@@ -7,6 +7,8 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('Delete user function called with method:', req.method)
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -27,7 +29,9 @@ serve(async (req) => {
 
     // Create a client for checking the requesting user's permissions
     const authorization = req.headers.get('Authorization')
+    console.log('Authorization header present:', !!authorization)
     if (!authorization) {
+      console.log('No authorization header found')
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
