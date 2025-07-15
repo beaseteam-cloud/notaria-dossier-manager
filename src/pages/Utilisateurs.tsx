@@ -36,19 +36,6 @@ export default function Utilisateurs() {
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const filtered = users.filter(user => 
-      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [users, searchTerm]);
-
   // Vérifier si l'utilisateur est admin
   if (authLoading) {
     return (
@@ -71,6 +58,19 @@ export default function Utilisateurs() {
       </div>
     );
   }
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const filtered = users.filter(user => 
+      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [users, searchTerm]);
 
   const fetchUsers = async () => {
     try {
@@ -123,27 +123,21 @@ export default function Utilisateurs() {
 
   const handleDeleteUser = async (user: User) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No session found');
+      // Supprimer l'utilisateur de Supabase Auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
+      
+      if (authError) {
+        throw authError;
       }
 
-      const response = await fetch(`https://joygrdtepsicsduvbazm.supabase.co/functions/v1/manage-users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          action: 'delete',
-          userId: user.user_id
-        })
-      });
+      // Supprimer le profil (cascade delete devrait s'en occuper, mais on peut être explicite)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", user.user_id);
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete user');
+      if (profileError) {
+        console.warn("Erreur lors de la suppression du profil:", profileError);
       }
 
       fetchUsers();
