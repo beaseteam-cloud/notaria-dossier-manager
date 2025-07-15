@@ -55,22 +55,6 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
-    return
-  }
-
-  const timeout = setTimeout(() => {
-    toastTimeouts.delete(toastId)
-    dispatch({
-      type: "REMOVE_TOAST",
-      toastId: toastId,
-    })
-  }, TOAST_REMOVE_DELAY)
-
-  toastTimeouts.set(toastId, timeout)
-}
-
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -91,10 +75,18 @@ export const reducer = (state: State, action: Action): State => {
       const { toastId } = action
 
       if (toastId) {
-        addToRemoveQueue(toastId)
+        const timeout = setTimeout(() => {
+          toastTimeouts.delete(toastId)
+          // Will be handled by the component
+        }, TOAST_REMOVE_DELAY)
+        toastTimeouts.set(toastId, timeout)
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+          const timeout = setTimeout(() => {
+            toastTimeouts.delete(toast.id)
+            // Will be handled by the component
+          }, TOAST_REMOVE_DELAY)
+          toastTimeouts.set(toast.id, timeout)
         })
       }
 
@@ -170,14 +162,9 @@ function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
-    const listener = (newState: State) => {
-      setState(newState)
-    }
-    
-    listeners.push(listener)
-    
+    listeners.push(setState)
     return () => {
-      const index = listeners.indexOf(listener)
+      const index = listeners.indexOf(setState)
       if (index > -1) {
         listeners.splice(index, 1)
       }
