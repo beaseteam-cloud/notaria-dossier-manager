@@ -25,6 +25,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -58,6 +68,8 @@ export default function Dossiers() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingDossier, setEditingDossier] = useState<Dossier | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [dossierToDelete, setDossierToDelete] = useState<Dossier | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     fetchDossiers();
@@ -95,6 +107,34 @@ export default function Dossiers() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteDossier = async (dossierId: string) => {
+    try {
+      const { error } = await supabase
+        .from('dossiers')
+        .delete()
+        .eq('id', dossierId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh the dossiers list
+      await fetchDossiers();
+      
+      toast({
+        title: "Dossier supprimé",
+        description: "Le dossier a été supprimé avec succès",
+      });
+    } catch (error: any) {
+      console.error('Error deleting dossier:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer le dossier",
+      });
     }
   };
 
@@ -254,7 +294,13 @@ export default function Dossiers() {
                                 <Edit className="w-4 h-4 mr-2" />
                                 Modifier
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => {
+                                  setDossierToDelete(dossier);
+                                  setShowDeleteDialog(true);
+                                }}
+                              >
                                 <Trash className="w-4 h-4 mr-2" />
                                 Supprimer
                               </DropdownMenuItem>
@@ -328,6 +374,34 @@ export default function Dossiers() {
         onOpenChange={setShowEditDialog}
         onSuccess={fetchDossiers}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le dossier "{dossierToDelete?.nom}" ?
+              Cette action est irréversible et supprimera également toutes les étapes et documents associés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (dossierToDelete) {
+                  deleteDossier(dossierToDelete.id);
+                  setShowDeleteDialog(false);
+                  setDossierToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
