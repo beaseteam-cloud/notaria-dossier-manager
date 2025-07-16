@@ -101,35 +101,26 @@ export default function Utilisateurs() {
     }
 
     try {
-      // Supprimer le profil de la table profiles
-      const { error: profileError } = await supabase
+      // Marquer l'utilisateur comme inactif au lieu de le supprimer complètement
+      const { error: updateError } = await supabase
         .from("profiles")
-        .delete()
+        .update({ actif: false })
         .eq("user_id", user.user_id);
 
-      if (profileError) {
-        throw profileError;
-      }
-
-      // Appeler la edge function pour supprimer l'utilisateur de l'authentification
-      const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId: user.user_id }
-      });
-
-      if (error) {
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
 
       fetchUsers();
       toast({
         title: "Succès",
-        description: "Utilisateur supprimé avec succès",
+        description: "Utilisateur désactivé avec succès",
       });
     } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
+      console.error("Erreur lors de la désactivation:", error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de supprimer l'utilisateur",
+        description: error instanceof Error ? error.message : "Impossible de désactiver l'utilisateur",
         variant: "destructive",
       });
     }
