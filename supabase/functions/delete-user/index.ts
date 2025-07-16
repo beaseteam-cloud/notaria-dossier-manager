@@ -37,15 +37,19 @@ serve(async (req: Request) => {
 
     console.log("Profile deleted successfully");
 
-    // Then delete the user from auth
+    // Then delete the user from auth (ignore if already deleted)
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
-    if (authError) {
+    if (authError && authError.message !== "User not found") {
       console.error("Auth deletion error:", authError);
       throw new Error(`Erreur suppression auth: ${authError.message}`);
     }
 
-    console.log("User deleted successfully from auth");
+    if (authError && authError.message === "User not found") {
+      console.log("User was already deleted from auth");
+    } else {
+      console.log("User deleted successfully from auth");
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: "Utilisateur supprimé complètement" }),
