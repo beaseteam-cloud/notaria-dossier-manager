@@ -11,6 +11,7 @@ import Dossiers from "./pages/Dossiers";
 import DossierDetail from "./pages/DossierDetail";
 import Modeles from "./pages/Modeles";
 import Utilisateurs from "./pages/Utilisateurs";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
