@@ -30,51 +30,33 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated }: CreateUs
     setLoading(true);
 
     try {
-      // Créer l'utilisateur dans Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            nom: formData.nom,
-            prenom: formData.prenom,
-            role: formData.role,
-          },
-        },
+      // Utiliser l'edge function pour créer l'utilisateur sans se connecter automatiquement
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          nom: formData.nom,
+          prenom: formData.prenom,
+          role: formData.role,
+          telephone: formData.telephone
+        }
       });
 
-      if (authError) {
-        throw authError;
+      if (error) {
+        throw error;
       }
 
-      if (authData.user) {
-        // Attendre un peu pour que le trigger se déclenche
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mettre à jour le profil avec les informations complètes
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({
-            telephone: formData.telephone || null,
-          })
-          .eq("user_id", authData.user.id);
+      // Réinitialiser le formulaire
+      setFormData({
+        email: "",
+        nom: "",
+        prenom: "",
+        telephone: "",
+        password: "",
+        role: "clerc",
+      });
 
-        if (profileError) {
-          console.warn("Erreur lors de la mise à jour du profil:", profileError);
-        }
-
-        // Réinitialiser le formulaire
-        setFormData({
-          email: "",
-          nom: "",
-          prenom: "",
-          telephone: "",
-          password: "",
-          role: "clerc",
-        });
-
-        onUserCreated();
-      }
+      onUserCreated();
     } catch (error: any) {
       console.error("Erreur lors de la création de l'utilisateur:", error);
       toast({
