@@ -43,24 +43,23 @@ serve(async (req: Request) => {
 
     console.log("User created in auth:", authData.user?.id);
 
-    // Create profile manually since the trigger might not fire with admin creation
+    // Le trigger handle_new_user() crée automatiquement le profil
+    // On attend un peu pour être sûr que le trigger s'est exécuté
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Maintenant on met à jour le profil avec les informations supplémentaires
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
-      .insert({
-        user_id: authData.user.id,
-        email,
-        nom,
-        prenom,
-        role,
-        telephone: telephone || null,
-        actif: true
-      });
+      .update({
+        telephone: telephone || null
+      })
+      .eq("user_id", authData.user.id);
 
     if (profileError) {
-      console.error("Profile creation error:", profileError);
-      // If profile creation fails, cleanup the auth user
+      console.error("Profile update error:", profileError);
+      // Si la mise à jour échoue, on supprime l'utilisateur auth créé
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      throw new Error(`Erreur création profil: ${profileError.message}`);
+      throw new Error(`Erreur mise à jour profil: ${profileError.message}`);
     }
 
     console.log("Profile created successfully");
