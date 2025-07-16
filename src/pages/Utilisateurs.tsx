@@ -96,25 +96,24 @@ export default function Utilisateurs() {
   };
 
   const handleDeleteUser = async (user: User) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.prenom} ${user.nom} ? Cette action est irréversible.`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer complètement l'utilisateur ${user.prenom} ${user.nom} ? Cette action supprimera le compte d'authentification ET le profil.`)) {
       return;
     }
 
     try {
-      // Supprimer complètement le profil de la base de données
-      const { error: deleteError } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", user.user_id);
+      // Appeler l'edge function qui supprime tout (profil + auth)
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: user.user_id }
+      });
 
-      if (deleteError) {
-        throw deleteError;
+      if (error) {
+        throw error;
       }
 
       fetchUsers();
       toast({
         title: "Succès",
-        description: "Utilisateur supprimé de la base de données",
+        description: "Utilisateur supprimé complètement (profil + authentification)",
       });
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
