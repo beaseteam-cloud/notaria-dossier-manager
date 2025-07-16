@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-
 interface Profile {
   id: string;
   user_id: string;
@@ -74,21 +72,13 @@ export function useAuth() {
       });
       
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur de connexion",
-          description: error.message,
-        });
+        console.error('Erreur de connexion:', error.message);
         return { error };
       }
       
       return { error: null };
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur de connexion",
-        description: error.message,
-      });
+      console.error('Erreur de connexion:', error.message);
       return { error };
     }
   };
@@ -111,26 +101,15 @@ export function useAuth() {
       });
       
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur d'inscription",
-          description: error.message,
-        });
+        console.error('Erreur d\'inscription:', error.message);
         return { error };
       }
       
-      toast({
-        title: "Compte créé",
-        description: "Vérifiez votre email pour confirmer votre compte.",
-      });
+      console.log('Compte créé - Vérifiez votre email pour confirmer votre compte.');
       
       return { error: null };
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur d'inscription",
-        description: error.message,
-      });
+      console.error('Erreur d\'inscription:', error.message);
       return { error };
     }
   };
@@ -140,11 +119,7 @@ export function useAuth() {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur de déconnexion",
-          description: error.message,
-        });
+        console.error('Erreur de déconnexion:', error.message);
         return { error };
       }
       
@@ -154,11 +129,7 @@ export function useAuth() {
       
       return { error: null };
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur de déconnexion",
-        description: error.message,
-      });
+      console.error('Erreur de déconnexion:', error.message);
       return { error };
     }
   };
