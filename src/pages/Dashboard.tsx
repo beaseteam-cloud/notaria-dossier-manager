@@ -188,7 +188,10 @@ export default function Dashboard() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="notaria-card">
+        <Card 
+          className="notaria-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
+          onClick={() => navigate('/dossiers')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Dossiers</CardTitle>
             <FolderOpen className="h-4 w-4 text-muted-foreground" />
@@ -201,7 +204,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="notaria-card">
+        <Card 
+          className="notaria-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
+          onClick={() => navigate('/dossiers?status=en_cours')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En cours</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -214,7 +220,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="notaria-card">
+        <Card 
+          className="notaria-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
+          onClick={() => navigate('/dossiers?status=termine')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Terminés</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -227,7 +236,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="notaria-card">
+        <Card 
+          className="notaria-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
+          onClick={() => navigate('/dossiers?status=en_retard')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En retard</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
