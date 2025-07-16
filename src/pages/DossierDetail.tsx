@@ -422,14 +422,6 @@ export default function DossierDetail() {
               <div key={etape.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {isCollaborateur && (
-                      <Checkbox
-                        checked={etape.status === 'termine'}
-                        onCheckedChange={(checked) => {
-                          updateEtapeStatus(etape.id, checked ? 'termine' : 'en_attente');
-                        }}
-                      />
-                    )}
                     <div>
                       <h4 className="font-medium">{etape.nom}</h4>
                       {etape.description && (
@@ -437,7 +429,45 @@ export default function DossierDetail() {
                       )}
                     </div>
                   </div>
-                  {getStatusBadge(etape.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(etape.status)}
+                    {isCollaborateur && (
+                      <div className="flex gap-2">
+                        {etape.status === 'en_attente' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateEtapeStatus(etape.id, 'en_cours')}
+                            className="flex items-center gap-1"
+                          >
+                            <Clock className="w-3 h-3" />
+                            Commencer
+                          </Button>
+                        )}
+                        {etape.status === 'en_cours' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateEtapeStatus(etape.id, 'termine')}
+                            className="flex items-center gap-1"
+                          >
+                            <CheckCircle className="w-3 h-3" />
+                            Terminer
+                          </Button>
+                        )}
+                        {etape.status === 'termine' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateEtapeStatus(etape.id, 'en_cours')}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Reprendre
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
