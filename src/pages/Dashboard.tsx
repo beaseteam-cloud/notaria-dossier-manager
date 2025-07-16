@@ -79,12 +79,35 @@ export default function Dashboard() {
         // Don't throw here, just continue with empty data
       }
 
+      // Fetch overdue steps to calculate real delays
+      const { data: overdueSteps, error: overdueError } = await supabase
+        .from('etapes_dossiers')
+        .select(`
+          dossier_id,
+          date_fin_prevue,
+          status
+        `)
+        .not('status', 'eq', 'terminee')
+        .lt('date_fin_prevue', new Date().toISOString())
+        .not('date_fin_prevue', 'is', null);
+
+      if (overdueError) {
+        console.error('Error fetching overdue steps:', overdueError);
+      }
+
+      // Get unique dossier IDs with overdue steps
+      const dossierIdsWithDelays = new Set(
+        overdueSteps?.map(step => step.dossier_id) || []
+      );
+
       // Calculate stats with empty array fallback
       const dossiersData = dossiers || [];
       const totalDossiers = dossiersData.length;
       const dossiersEnCours = dossiersData.filter(d => d.status === 'en_cours').length;
       const dossiersTermines = dossiersData.filter(d => d.status === 'termine').length;
-      const dossiersEnRetard = dossiersData.filter(d => d.status === 'en_cours' && d.pourcentage_completion < 50).length;
+      const dossiersEnRetard = dossiersData.filter(d => 
+        dossierIdsWithDelays.has(d.id)
+      ).length;
       const totalFrais = dossiersData.reduce((sum, d) => sum + (d.montant_frais || 0), 0);
 
       console.log('Calculated stats:', { totalDossiers, dossiersEnCours, dossiersTermines });
