@@ -112,20 +112,12 @@ export default function Utilisateurs() {
       }
 
       // Appeler la edge function pour supprimer l'utilisateur de l'authentification
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      const response = await fetch("/functions/v1/delete-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionData.session?.access_token}`,
-        },
-        body: JSON.stringify({ userId: user.user_id }),
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: user.user_id }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de la suppression");
+      if (error) {
+        throw error;
       }
 
       fetchUsers();
