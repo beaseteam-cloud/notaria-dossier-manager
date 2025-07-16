@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { NotificationButton } from '@/components/notifications/NotificationButton';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -48,10 +49,7 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full text-xs"></span>
-          </Button>
+          <NotificationButton />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

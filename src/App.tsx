@@ -40,7 +40,7 @@ function AppRoutes() {
         <Route path="dossiers" element={<Dossiers />} />
         <Route path="dossiers/:id" element={<DossierDetail />} />
         <Route path="modeles" element={<Modeles />} />
-        <Route path="notifications" element={<div>Notifications (à implémenter)</div>} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="utilisateurs" element={<Utilisateurs />} />
       </Route>
       <Route path="*" element={<NotFound />} />
