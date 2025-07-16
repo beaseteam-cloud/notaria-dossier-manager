@@ -36,7 +36,20 @@ export default function Utilisateurs() {
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
-  // Affichage conditionnel basé sur l'état d'authentification
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const filtered = users.filter(user => 
+      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [users, searchTerm]);
+
+  // Vérifier si l'utilisateur est admin
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -58,74 +71,6 @@ export default function Utilisateurs() {
       </div>
     );
   }
-
-  return <UtilisateursContent 
-    users={users} 
-    setUsers={setUsers}
-    filteredUsers={filteredUsers}
-    setFilteredUsers={setFilteredUsers}
-    searchTerm={searchTerm}
-    setSearchTerm={setSearchTerm}
-    loading={loading}
-    setLoading={setLoading}
-    selectedUser={selectedUser}
-    setSelectedUser={setSelectedUser}
-    showCreateDialog={showCreateDialog}
-    setShowCreateDialog={setShowCreateDialog}
-    showEditDialog={showEditDialog}
-    setShowEditDialog={setShowEditDialog}
-    toast={toast}
-  />;
-}
-
-interface UtilisateursContentProps {
-  users: User[];
-  setUsers: (users: User[]) => void;
-  filteredUsers: User[];
-  setFilteredUsers: (users: User[]) => void;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-  selectedUser: User | null;
-  setSelectedUser: (user: User | null) => void;
-  showCreateDialog: boolean;
-  setShowCreateDialog: (show: boolean) => void;
-  showEditDialog: boolean;
-  setShowEditDialog: (show: boolean) => void;
-  toast: any;
-}
-
-function UtilisateursContent({
-  users,
-  setUsers,
-  filteredUsers,
-  setFilteredUsers,
-  searchTerm,
-  setSearchTerm,
-  loading,
-  setLoading,
-  selectedUser,
-  setSelectedUser,
-  showCreateDialog,
-  setShowCreateDialog,
-  showEditDialog,
-  setShowEditDialog,
-  toast
-}: UtilisateursContentProps) {
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const filtered = users.filter(user => 
-      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [users, searchTerm]);
 
   const fetchUsers = async () => {
     try {
@@ -178,13 +123,27 @@ function UtilisateursContent({
 
   const handleDeleteUser = async (user: User) => {
     try {
-      // Appeler l'Edge Function pour supprimer l'utilisateur
-      const { error } = await supabase.functions.invoke('delete-user', {
-        body: { user_id: user.user_id }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
+      const response = await fetch(`https://joygrdtepsicsduvbazm.supabase.co/functions/v1/manage-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'delete',
+          userId: user.user_id
+        })
       });
 
-      if (error) {
-        throw error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
       }
 
       fetchUsers();

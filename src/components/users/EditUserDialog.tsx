@@ -60,46 +60,41 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     setLoading(true);
 
     try {
-      // Mettre à jour le mot de passe si fourni
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
+      const userData: any = {
+        email: formData.email,
+        nom: formData.nom,
+        prenom: formData.prenom,
+        telephone: formData.telephone,
+        role: formData.role,
+        actif: formData.actif
+      };
+
       if (formData.password) {
-        const { error: passwordError } = await supabase.auth.admin.updateUserById(
-          user.user_id,
-          { password: formData.password }
-        );
-
-        if (passwordError) {
-          throw passwordError;
-        }
+        userData.password = formData.password;
       }
 
-      // Mettre à jour l'email dans Supabase Auth si changé
-      if (formData.email !== user.email) {
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-          user.user_id,
-          { email: formData.email }
-        );
-
-        if (authError) {
-          throw authError;
-        }
-      }
-
-      // Mettre à jour le profil utilisateur
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          email: formData.email,
-          nom: formData.nom,
-          prenom: formData.prenom,
-          telephone: formData.telephone || null,
-          role: formData.role,
-          actif: formData.actif,
-          updated_at: new Date().toISOString(),
+      const response = await fetch(`https://joygrdtepsicsduvbazm.supabase.co/functions/v1/manage-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'update',
+          userId: user.user_id,
+          userData
         })
-        .eq("id", user.id);
+      });
 
-      if (profileError) {
-        throw profileError;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update user');
       }
 
       onUserUpdated();
