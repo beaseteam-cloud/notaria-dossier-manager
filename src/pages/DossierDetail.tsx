@@ -253,8 +253,7 @@ export default function DossierDetail() {
         return newEtapes;
       });
 
-      // Update progression after state change
-      setTimeout(() => updateDossierProgression(), 100);
+      // La progression sera automatiquement mise à jour via useEffect
 
       toast({
         title: "Étape mise à jour",
