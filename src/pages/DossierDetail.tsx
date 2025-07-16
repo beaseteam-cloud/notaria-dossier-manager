@@ -243,11 +243,23 @@ export default function DossierDetail() {
         throw error;
       }
 
-      // Update local state
+      // Récupérer les données complètes de l'étape (incluant date_fin_prevue calculée par le trigger)
+      const { data: fullEtapeData, error: fetchError } = await supabase
+        .from('etapes_dossiers')
+        .select('*')
+        .eq('id', etapeId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching updated etape:', fetchError);
+        throw fetchError;
+      }
+
+      // Update local state avec les données complètes
       setEtapes(prev => {
         const newEtapes = prev.map(e => 
           e.id === etapeId 
-            ? { ...e, ...updates }
+            ? { ...e, ...fullEtapeData }
             : e
         );
         return newEtapes;
