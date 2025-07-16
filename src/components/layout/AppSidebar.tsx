@@ -17,9 +17,7 @@ import {
   FolderOpen, 
   FileText, 
   Users, 
-  Settings,
-  Bell,
-  BarChart3
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -32,8 +30,6 @@ const menuItems = [
 
 const adminItems = [
   { title: 'Utilisateurs', url: '/utilisateurs', icon: Users },
-  { title: 'Rapports', url: '/rapports', icon: BarChart3 },
-  { title: 'Paramètres', url: '/parametres', icon: Settings },
 ];
 
 export function AppSidebar() {

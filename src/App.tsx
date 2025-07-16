@@ -42,8 +42,6 @@ function AppRoutes() {
         <Route path="modeles" element={<Modeles />} />
         <Route path="notifications" element={<div>Notifications (à implémenter)</div>} />
         <Route path="utilisateurs" element={<Utilisateurs />} />
-        <Route path="rapports" element={<div>Rapports (à implémenter)</div>} />
-        <Route path="parametres" element={<div>Paramètres (à implémenter)</div>} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
