@@ -111,11 +111,21 @@ export default function Utilisateurs() {
         throw profileError;
       }
 
-      // Supprimer l'utilisateur de l'authentification
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
+      // Appeler la edge function pour supprimer l'utilisateur de l'authentification
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await fetch("/functions/v1/delete-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionData.session?.access_token}`,
+        },
+        body: JSON.stringify({ userId: user.user_id }),
+      });
 
-      if (authError) {
-        throw authError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de la suppression");
       }
 
       fetchUsers();
@@ -127,7 +137,7 @@ export default function Utilisateurs() {
       console.error("Erreur lors de la suppression:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer l'utilisateur",
+        description: error instanceof Error ? error.message : "Impossible de supprimer l'utilisateur",
         variant: "destructive",
       });
     }
