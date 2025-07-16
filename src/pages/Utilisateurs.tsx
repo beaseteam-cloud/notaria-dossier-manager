@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Search } from "lucide-react";
+import { Plus, Edit, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,6 +95,44 @@ export default function Utilisateurs() {
     setShowEditDialog(true);
   };
 
+  const handleDeleteUser = async (user: User) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.prenom} ${user.nom} ?`)) {
+      return;
+    }
+
+    try {
+      // Supprimer le profil de la table profiles
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", user.user_id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Supprimer l'utilisateur de l'authentification
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.user_id);
+
+      if (authError) {
+        throw authError;
+      }
+
+      fetchUsers();
+      toast({
+        title: "Succès",
+        description: "Utilisateur supprimé avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'utilisateur",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
@@ -185,13 +223,23 @@ export default function Utilisateurs() {
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>{getStatusBadge(user.actif)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteUser(user)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
