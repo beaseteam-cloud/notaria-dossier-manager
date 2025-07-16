@@ -96,31 +96,31 @@ export default function Utilisateurs() {
   };
 
   const handleDeleteUser = async (user: User) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.prenom} ${user.nom} ?`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.prenom} ${user.nom} ? Cette action est irréversible.`)) {
       return;
     }
 
     try {
-      // Marquer l'utilisateur comme inactif au lieu de le supprimer complètement
-      const { error: updateError } = await supabase
+      // Supprimer complètement le profil de la base de données
+      const { error: deleteError } = await supabase
         .from("profiles")
-        .update({ actif: false })
+        .delete()
         .eq("user_id", user.user_id);
 
-      if (updateError) {
-        throw updateError;
+      if (deleteError) {
+        throw deleteError;
       }
 
       fetchUsers();
       toast({
         title: "Succès",
-        description: "Utilisateur désactivé avec succès",
+        description: "Utilisateur supprimé de la base de données",
       });
     } catch (error) {
-      console.error("Erreur lors de la désactivation:", error);
+      console.error("Erreur lors de la suppression:", error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de désactiver l'utilisateur",
+        description: error instanceof Error ? error.message : "Impossible de supprimer l'utilisateur",
         variant: "destructive",
       });
     }
