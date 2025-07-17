@@ -137,53 +137,28 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      // If session is already missing, just clear local state
-      if (!session) {
-        setUser(null);
-        setSession(null);
-        setProfile(null);
-        return { error: null };
-      }
-
-      const { error } = await supabase.auth.signOut();
+      // Force clear all auth state regardless of server response
+      await supabase.auth.signOut({ scope: 'local' });
       
-      if (error) {
-        // If auth session is missing, just clear local state
-        if (error.message.includes('session') || error.message.includes('Auth session missing')) {
-          setUser(null);
-          setSession(null);
-          setProfile(null);
-          return { error: null };
-        }
-        
-        toast({
-          variant: "destructive",
-          title: "Erreur de déconnexion",
-          description: error.message,
-        });
-        return { error };
-      }
-      
+      // Clear local state
       setUser(null);
       setSession(null);
       setProfile(null);
       
+      // Force clear any remaining auth data from localStorage
+      localStorage.removeItem('sb-joygrdtepsicsduvbazm-auth-token');
+      
       return { error: null };
     } catch (error: any) {
-      // If session is invalid, just clear local state
-      if (error.message?.includes('session') || error.message?.includes('Auth session missing')) {
-        setUser(null);
-        setSession(null);
-        setProfile(null);
-        return { error: null };
-      }
+      // Always clear local state even if signOut fails
+      setUser(null);
+      setSession(null);
+      setProfile(null);
       
-      toast({
-        variant: "destructive",
-        title: "Erreur de déconnexion",
-        description: error.message,
-      });
-      return { error };
+      // Force clear localStorage
+      localStorage.removeItem('sb-joygrdtepsicsduvbazm-auth-token');
+      
+      return { error: null };
     }
   };
 
