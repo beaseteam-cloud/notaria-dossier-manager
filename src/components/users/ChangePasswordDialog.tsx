@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 
 interface User {
   id: string;
@@ -29,7 +28,6 @@ export function ChangePasswordDialog({ open, onOpenChange, user }: ChangePasswor
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
-  const { user: currentUser, signOut } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +35,7 @@ export function ChangePasswordDialog({ open, onOpenChange, user }: ChangePasswor
     setError("");
 
     try {
-      const { data, error: passwordError } = await supabase.functions.invoke('change-user-password', {
+      const { error: passwordError } = await supabase.functions.invoke('change-user-password', {
         body: {
           userId: user.user_id,
           oldPassword: formData.oldPassword,
@@ -57,18 +55,6 @@ export function ChangePasswordDialog({ open, onOpenChange, user }: ChangePasswor
 
       setFormData({ oldPassword: "", newPassword: "" });
       onOpenChange(false);
-
-      // If the current user changed their own password, sign them out
-      if (data?.shouldSignOut && currentUser?.id === user.user_id) {
-        toast({
-          title: "Reconnexion requise",
-          description: "Votre session a été invalidée pour des raisons de sécurité. Veuillez vous reconnecter avec votre nouveau mot de passe.",
-        });
-        
-        setTimeout(() => {
-          signOut();
-        }, 2000);
-      }
     } catch (error: any) {
       console.error("Erreur lors de la modification du mot de passe:", error);
       setError(error.message || "Impossible de modifier le mot de passe");
