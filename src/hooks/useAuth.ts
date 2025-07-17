@@ -137,9 +137,25 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
+      // If session is already missing, just clear local state
+      if (!session) {
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        return { error: null };
+      }
+
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        // If auth session is missing, just clear local state
+        if (error.message.includes('session') || error.message.includes('Auth session missing')) {
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          return { error: null };
+        }
+        
         toast({
           variant: "destructive",
           title: "Erreur de déconnexion",
@@ -154,6 +170,14 @@ export function useAuth() {
       
       return { error: null };
     } catch (error: any) {
+      // If session is invalid, just clear local state
+      if (error.message?.includes('session') || error.message?.includes('Auth session missing')) {
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        return { error: null };
+      }
+      
       toast({
         variant: "destructive",
         title: "Erreur de déconnexion",
