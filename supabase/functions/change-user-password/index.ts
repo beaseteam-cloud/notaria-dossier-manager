@@ -116,6 +116,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check if admin is changing their own password
+    const isChangingOwnPassword = userId === user.id;
+
     // Update the user's password using admin API
     const { error: updateError } = await supabase.auth.admin.updateUserById(
       userId,
@@ -134,7 +137,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Password updated successfully' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Password updated successfully',
+        shouldSignOut: isChangingOwnPassword // Indicate if user should be signed out
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
