@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Search, Trash2 } from "lucide-react";
+import { Plus, Edit, Search, Trash2, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { EditUserDialog } from "@/components/users/EditUserDialog";
+import { ChangePasswordDialog } from "@/components/users/ChangePasswordDialog";
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ export default function Utilisateurs() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const { toast } = useToast();
   const { isAdmin, loading: authLoading } = useAuth();
 
@@ -95,6 +97,11 @@ export default function Utilisateurs() {
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setShowEditDialog(true);
+  };
+
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setShowChangePasswordDialog(true);
   };
 
   const handleDeleteUser = async (user: User) => {
@@ -241,6 +248,14 @@ export default function Utilisateurs() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleChangePassword(user)}
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      >
+                        <Key className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDeleteUser(user)}
                         className="text-red-600 hover:text-red-800 hover:bg-red-50"
                       >
@@ -274,6 +289,14 @@ export default function Utilisateurs() {
           onOpenChange={setShowEditDialog}
           user={selectedUser}
           onUserUpdated={handleUserUpdated}
+        />
+      )}
+
+      {selectedUser && (
+        <ChangePasswordDialog
+          open={showChangePasswordDialog}
+          onOpenChange={setShowChangePasswordDialog}
+          user={selectedUser}
         />
       )}
     </div>

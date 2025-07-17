@@ -36,7 +36,6 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     telephone: "",
     role: "clerc" as "admin" | "collaborateur" | "clerc",
     actif: true,
-    newPassword: "",
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -50,7 +49,6 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
         telephone: user.telephone || "",
         role: user.role as "admin" | "collaborateur" | "clerc",
         actif: user.actif,
-        newPassword: "",
       });
     }
   }, [user]);
@@ -76,20 +74,6 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
 
       if (profileError) {
         throw profileError;
-      }
-
-      // Mettre à jour le mot de passe si fourni
-      if (formData.newPassword.trim()) {
-        const { error: passwordError } = await supabase.functions.invoke('update-user-password', {
-          body: {
-            userId: user.user_id,
-            newPassword: formData.newPassword,
-          },
-        });
-
-        if (passwordError) {
-          throw new Error(passwordError.message || 'Erreur lors de la mise à jour du mot de passe');
-        }
       }
 
       toast({
@@ -155,16 +139,6 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               type="tel"
               value={formData.telephone}
               onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">Nouveau mot de passe (optionnel)</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={formData.newPassword}
-              onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-              placeholder="Laisser vide pour ne pas changer"
             />
           </div>
           <div className="space-y-2">
