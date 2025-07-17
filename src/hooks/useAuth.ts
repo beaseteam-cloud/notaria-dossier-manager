@@ -137,28 +137,29 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      // Force clear all auth state regardless of server response
-      await supabase.auth.signOut({ scope: 'local' });
+      const { error } = await supabase.auth.signOut();
       
-      // Clear local state
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur de déconnexion",
+          description: error.message,
+        });
+        return { error };
+      }
+      
       setUser(null);
       setSession(null);
       setProfile(null);
-      
-      // Force clear any remaining auth data from localStorage
-      localStorage.removeItem('sb-joygrdtepsicsduvbazm-auth-token');
       
       return { error: null };
     } catch (error: any) {
-      // Always clear local state even if signOut fails
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      
-      // Force clear localStorage
-      localStorage.removeItem('sb-joygrdtepsicsduvbazm-auth-token');
-      
-      return { error: null };
+      toast({
+        variant: "destructive",
+        title: "Erreur de déconnexion",
+        description: error.message,
+      });
+      return { error };
     }
   };
 

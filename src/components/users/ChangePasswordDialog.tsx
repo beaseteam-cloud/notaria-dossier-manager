@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface User {
   id: string;
@@ -28,6 +29,7 @@ export function ChangePasswordDialog({ open, onOpenChange, user }: ChangePasswor
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +50,17 @@ export function ChangePasswordDialog({ open, onOpenChange, user }: ChangePasswor
         return;
       }
 
+      // Reconnexion automatique avec le nouveau mot de passe
+      const { error: signInError } = await signIn(user.email, formData.newPassword);
+      
+      if (signInError) {
+        setError("Mot de passe modifié mais erreur de reconnexion. Veuillez vous reconnecter manuellement.");
+        return;
+      }
+
       toast({
         title: "Succès",
-        description: "Mot de passe modifié avec succès",
+        description: "Mot de passe modifié et reconnexion effectuée avec succès",
       });
 
       setFormData({ oldPassword: "", newPassword: "" });
