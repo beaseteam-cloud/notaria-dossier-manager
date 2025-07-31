@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   Upload, 
@@ -13,7 +14,10 @@ import {
   FileText,
   User,
   Calendar,
-  Edit
+  Edit,
+  Save,
+  X,
+  StickyNote
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -69,6 +73,7 @@ interface DocumentDossier {
   document_attendu_modele_id?: string;
   type_mime?: string;
   taille_fichier?: number;
+  description?: string;
 }
 
 export default function DossierDetail() {
@@ -81,6 +86,9 @@ export default function DossierDetail() {
   const [documentsUploads, setDocumentsUploads] = useState<DocumentDossier[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingEtapeNotes, setEditingEtapeNotes] = useState<string | null>(null);
+  const [editingDocumentNotes, setEditingDocumentNotes] = useState<string | null>(null);
+  const [tempNotes, setTempNotes] = useState<string>('');
 
   useEffect(() => {
     if (id) {
@@ -279,6 +287,82 @@ export default function DossierDetail() {
         description: "Impossible de mettre à jour l'étape",
       });
     }
+  };
+
+  const updateEtapeNotes = async (etapeId: string, notes: string) => {
+    try {
+      const { error } = await supabase
+        .from('etapes_dossiers')
+        .update({ notes })
+        .eq('id', etapeId);
+
+      if (error) throw error;
+
+      setEtapes(prev => prev.map(e => 
+        e.id === etapeId ? { ...e, notes } : e
+      ));
+
+      setEditingEtapeNotes(null);
+      setTempNotes('');
+
+      toast({
+        title: "Notes mises à jour",
+        description: "Les notes de l'étape ont été sauvegardées",
+      });
+    } catch (error: any) {
+      console.error('Error updating etape notes:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder les notes",
+      });
+    }
+  };
+
+  const updateDocumentNotes = async (documentId: string, description: string) => {
+    try {
+      const { error } = await supabase
+        .from('documents_dossiers')
+        .update({ description })
+        .eq('id', documentId);
+
+      if (error) throw error;
+
+      setDocumentsUploads(prev => prev.map(d => 
+        d.id === documentId ? { ...d, description } : d
+      ));
+
+      setEditingDocumentNotes(null);
+      setTempNotes('');
+
+      toast({
+        title: "Notes mises à jour",
+        description: "Les notes du document ont été sauvegardées",
+      });
+    } catch (error: any) {
+      console.error('Error updating document notes:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder les notes",
+      });
+    }
+  };
+
+  const startEditingEtapeNotes = (etapeId: string, currentNotes?: string) => {
+    setEditingEtapeNotes(etapeId);
+    setTempNotes(currentNotes || '');
+  };
+
+  const startEditingDocumentNotes = (documentId: string, currentNotes?: string) => {
+    setEditingDocumentNotes(documentId);
+    setTempNotes(currentNotes || '');
+  };
+
+  const cancelEditing = () => {
+    setEditingEtapeNotes(null);
+    setEditingDocumentNotes(null);
+    setTempNotes('');
   };
 
   const getStatusBadge = (status: string) => {
@@ -493,6 +577,63 @@ export default function DossierDetail() {
                   </div>
                 </div>
 
+                {/* Notes section for etape */}
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <StickyNote className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Notes pour cette étape</span>
+                    </div>
+                    {isCollaborateur && editingEtapeNotes !== etape.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => startEditingEtapeNotes(etape.id, etape.notes)}
+                        className="h-6 px-2"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                  {editingEtapeNotes === etape.id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={tempNotes}
+                        onChange={(e) => setTempNotes(e.target.value)}
+                        placeholder="Ajoutez vos notes pour cette étape..."
+                        className="min-h-[80px]"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => updateEtapeNotes(etape.id, tempNotes)}
+                          className="flex items-center gap-1"
+                        >
+                          <Save className="w-3 h-3" />
+                          Sauvegarder
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={cancelEditing}
+                          className="flex items-center gap-1"
+                        >
+                          <X className="w-3 h-3" />
+                          Annuler
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-muted/30 rounded-md p-3 min-h-[60px]">
+                      {etape.notes ? (
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{etape.notes}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Aucune note pour cette étape</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Documents pour cette étape */}
                 {documentsEtape.length > 0 && (
                   <div className="mt-4 space-y-2">
@@ -500,46 +641,107 @@ export default function DossierDetail() {
                     {documentsEtape.map((docAttendu) => {
                       const uploaded = getUploadedDocument(docAttendu.id);
                       return (
-                        <div key={docAttendu.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            <span className="text-sm">{docAttendu.nom}</span>
-                            {docAttendu.obligatoire && (
-                              <Badge variant="outline" className="text-xs">Obligatoire</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {uploaded ? (
-                              <>
-                                <Badge className="bg-green-100 text-green-800">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Reçu
+                        <div key={docAttendu.id} className="space-y-2">
+                          <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              <span className="text-sm">{docAttendu.nom}</span>
+                              {docAttendu.obligatoire && (
+                                <Badge variant="outline" className="text-xs">Obligatoire</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {uploaded ? (
+                                <>
+                                  <Badge className="bg-green-100 text-green-800">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Reçu
+                                  </Badge>
+                                  <DocumentViewer
+                                    documentId={uploaded.id}
+                                    fileName={uploaded.fichier_nom || uploaded.nom}
+                                    fileUrl={uploaded.fichier_url}
+                                    mimeType={uploaded.type_mime}
+                                  />
+                                </>
+                              ) : (
+                                <Badge variant="outline">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  En attente
                                 </Badge>
-                                <DocumentViewer
-                                  documentId={uploaded.id}
-                                  fileName={uploaded.fichier_nom || uploaded.nom}
-                                  fileUrl={uploaded.fichier_url}
-                                  mimeType={uploaded.type_mime}
+                              )}
+                              {isCollaborateur && !uploaded && (
+                                <DocumentUpload
+                                  dossierId={id!}
+                                  etapeDossierId={etape.id}
+                                  documentAttenduId={docAttendu.id}
+                                  documentNom={docAttendu.nom}
+                                  onUploadSuccess={() => {
+                                    fetchDossierDetail();
+                                  }}
                                 />
-                              </>
-                            ) : (
-                              <Badge variant="outline">
-                                <Clock className="w-3 h-3 mr-1" />
-                                En attente
-                              </Badge>
-                            )}
-                            {isCollaborateur && !uploaded && (
-                              <DocumentUpload
-                                dossierId={id!}
-                                etapeDossierId={etape.id}
-                                documentAttenduId={docAttendu.id}
-                                documentNom={docAttendu.nom}
-                                onUploadSuccess={() => {
-                                  fetchDossierDetail();
-                                }}
-                              />
-                            )}
+                              )}
+                            </div>
                           </div>
+                          
+                          {/* Notes section for document in etape view */}
+                          {uploaded && (
+                            <div className="ml-6 mt-2">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <StickyNote className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-xs font-medium">Notes</span>
+                                </div>
+                                {isCollaborateur && editingDocumentNotes !== uploaded.id && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => startEditingDocumentNotes(uploaded.id, uploaded.description)}
+                                    className="h-5 px-1"
+                                  >
+                                    <Edit className="w-2 h-2" />
+                                  </Button>
+                                )}
+                              </div>
+                              {editingDocumentNotes === uploaded.id ? (
+                                <div className="space-y-2">
+                                  <Textarea
+                                    value={tempNotes}
+                                    onChange={(e) => setTempNotes(e.target.value)}
+                                    placeholder="Ajoutez vos notes pour ce document..."
+                                    className="min-h-[60px] text-xs"
+                                  />
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updateDocumentNotes(uploaded.id, tempNotes)}
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      <Save className="w-2 h-2 mr-1" />
+                                      Sauvegarder
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={cancelEditing}
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      <X className="w-2 h-2 mr-1" />
+                                      Annuler
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="bg-muted/20 rounded p-2 min-h-[40px]">
+                                  {uploaded.description ? (
+                                    <p className="text-xs text-muted-foreground whitespace-pre-wrap">{uploaded.description}</p>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground italic">Aucune note pour ce document</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -624,6 +826,65 @@ export default function DossierDetail() {
                         )}
                       </div>
                     </div>
+                    
+                    {/* Notes section for document */}
+                    {uploaded && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <StickyNote className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">Notes pour ce document</span>
+                          </div>
+                          {isCollaborateur && editingDocumentNotes !== uploaded.id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEditingDocumentNotes(uploaded.id, uploaded.description)}
+                              className="h-6 px-2"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {editingDocumentNotes === uploaded.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={tempNotes}
+                              onChange={(e) => setTempNotes(e.target.value)}
+                              placeholder="Ajoutez vos notes pour ce document..."
+                              className="min-h-[80px]"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => updateDocumentNotes(uploaded.id, tempNotes)}
+                                className="flex items-center gap-1"
+                              >
+                                <Save className="w-3 h-3" />
+                                Sauvegarder
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={cancelEditing}
+                                className="flex items-center gap-1"
+                              >
+                                <X className="w-3 h-3" />
+                                Annuler
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-muted/30 rounded-md p-3 min-h-[60px]">
+                            {uploaded.description ? (
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{uploaded.description}</p>
+                            ) : (
+                              <p className="text-sm text-muted-foreground italic">Aucune note pour ce document</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
