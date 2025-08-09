@@ -155,7 +155,7 @@ export default function Dossiers() {
     if (!amount) return '-';
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'EUR',
+      currency: 'XOF',
     }).format(amount);
   };
 

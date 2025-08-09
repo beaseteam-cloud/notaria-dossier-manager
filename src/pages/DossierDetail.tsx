@@ -229,7 +229,7 @@ export default function DossierDetail() {
 
       toast({
         title: "Paiement enregistré",
-        description: `Montant de ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(montantPaiement)} ajouté aux frais du dossier`,
+        description: `Montant de ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(montantPaiement)} ajouté aux frais du dossier`,
       });
 
     } catch (error) {
@@ -554,7 +554,7 @@ export default function DossierDetail() {
               <span className="text-sm">
                 {new Intl.NumberFormat('fr-FR', {
                   style: 'currency',
-                  currency: 'EUR',
+                  currency: 'XOF',
                 }).format(dossier.montant_frais)}
               </span>
             </div>
@@ -594,7 +594,7 @@ export default function DossierDetail() {
                            <Badge variant="outline">Paiement final</Badge>
                          )}
                          {etape.etapes_modeles?.montant_paiement && (
-                           <Badge variant="default">{etape.etapes_modeles.montant_paiement}€</Badge>
+                           <Badge variant="default">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(etape.etapes_modeles.montant_paiement)}</Badge>
                          )}
                        </div>
                        {etape.description && (
