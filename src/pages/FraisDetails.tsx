@@ -32,7 +32,7 @@ export default function FraisDetails() {
 
   const fetchFraisDetails = async () => {
     try {
-      // D'abord récupérer les dossiers avec leurs frais
+      // Récupérer les dossiers avec leurs frais
       const { data: dossiersData, error: dossiersError } = await supabase
         .from('dossiers')
         .select(`
@@ -41,27 +41,46 @@ export default function FraisDetails() {
           client_nom,
           status,
           montant_frais,
-          created_at
+          created_at,
+          etape_courante_id
         `)
         .not('montant_frais', 'is', null)
         .gt('montant_frais', 0);
 
       if (dossiersError) throw dossiersError;
 
-      // Récupérer seulement les dossiers avec leurs frais (les étapes n'ont pas de montant_frais)
-      const formattedData = dossiersData?.map(dossier => ({
-        id: `dossier-${dossier.id}`,
-        dossier_id: dossier.id,
-        dossier_nom: dossier.nom,
-        client_nom: dossier.client_nom,
-        etape_nom: 'Frais du dossier',
-        montant_frais: dossier.montant_frais,
-        date_creation: dossier.created_at,
-        status: dossier.status,
-      })) || [];
+      // Récupérer les noms des étapes courantes
+      const dossiersWithEtapes = await Promise.all(
+        dossiersData?.map(async (dossier) => {
+          let etapeNom = 'Étape non définie';
+          
+          if (dossier.etape_courante_id) {
+            const { data: etapeData } = await supabase
+              .from('etapes_dossiers')
+              .select('nom')
+              .eq('id', dossier.etape_courante_id)
+              .single();
+            
+            if (etapeData) {
+              etapeNom = etapeData.nom;
+            }
+          }
+
+          return {
+            id: `dossier-${dossier.id}`,
+            dossier_id: dossier.id,
+            dossier_nom: dossier.nom,
+            client_nom: dossier.client_nom,
+            etape_nom: etapeNom,
+            montant_frais: dossier.montant_frais,
+            date_creation: dossier.created_at,
+            status: dossier.status,
+          };
+        }) || []
+      );
 
       // Trier par date de création décroissante
-      const sortedData = formattedData.sort(
+      const sortedData = dossiersWithEtapes.sort(
         (a, b) => new Date(b.date_creation).getTime() - new Date(a.date_creation).getTime()
       );
 
