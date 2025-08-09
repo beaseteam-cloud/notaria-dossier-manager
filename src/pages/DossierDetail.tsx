@@ -83,7 +83,7 @@ interface DocumentDossier {
 export default function DossierDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isCollaborateur } = useAuth();
+  const { isCollaborateur, user } = useAuth();
   const [dossier, setDossier] = useState<DossierDetail | null>(null);
   const [etapes, setEtapes] = useState<EtapeDossier[]>([]);
   const [documentsAttendus, setDocumentsAttendus] = useState<DocumentAttendu[]>([]);
@@ -93,6 +93,7 @@ export default function DossierDetail() {
   const [editingEtapeNotes, setEditingEtapeNotes] = useState<string | null>(null);
   const [editingDocumentNotes, setEditingDocumentNotes] = useState<string | null>(null);
   const [tempNotes, setTempNotes] = useState<string>('');
+  const [isAssignedUser, setIsAssignedUser] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -159,6 +160,18 @@ export default function DossierDetail() {
 
       if (uploadsError) throw uploadsError;
       setDocumentsUploads(uploadsData || []);
+
+      // Check if current user is assigned to this dossier
+      if (user?.id) {
+        const { data: participantData, error: participantError } = await supabase
+          .from('dossier_participants')
+          .select('id')
+          .eq('dossier_id', id)
+          .eq('user_id', user.id)
+          .single();
+
+        setIsAssignedUser(!!participantData && !participantError);
+      }
 
     } catch (error: any) {
       console.error('Error fetching dossier detail:', error);
@@ -520,7 +533,7 @@ export default function DossierDetail() {
             </p>
           </div>
         </div>
-        {isCollaborateur && (
+        {(isCollaborateur || isAssignedUser) && (
           <Button
             variant="outline"
             onClick={() => setShowEditDialog(true)}
@@ -607,7 +620,7 @@ export default function DossierDetail() {
                    </div>
                   <div className="flex items-center gap-2">
                     {getStatusBadge(etape.status)}
-                    {isCollaborateur && (
+                     {(isCollaborateur || isAssignedUser) && (
                       <div className="flex gap-2">
                         {etape.status === 'en_attente' && (
                           <Button
@@ -665,7 +678,7 @@ export default function DossierDetail() {
                       <StickyNote className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-medium">Notes pour cette étape</span>
                     </div>
-                    {isCollaborateur && editingEtapeNotes !== etape.id && (
+                    {(isCollaborateur || isAssignedUser) && editingEtapeNotes !== etape.id && (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -751,7 +764,7 @@ export default function DossierDetail() {
                                   En attente
                                 </Badge>
                               )}
-                              {isCollaborateur && !uploaded && (
+                              {(isCollaborateur || isAssignedUser) && !uploaded && (
                                 <DocumentUpload
                                   dossierId={id!}
                                   etapeDossierId={etape.id}
@@ -773,7 +786,7 @@ export default function DossierDetail() {
                                   <StickyNote className="w-3 h-3 text-muted-foreground" />
                                   <span className="text-xs font-medium">Notes</span>
                                 </div>
-                                {isCollaborateur && editingDocumentNotes !== uploaded.id && (
+                                 {(isCollaborateur || isAssignedUser) && editingDocumentNotes !== uploaded.id && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -894,7 +907,7 @@ export default function DossierDetail() {
                               <Clock className="w-3 h-3 mr-1" />
                               En attente
                             </Badge>
-                            {isCollaborateur && etapeCorrespondante && (
+                            {(isCollaborateur || isAssignedUser) && etapeCorrespondante && (
                               <DocumentUpload
                                 dossierId={id!}
                                 etapeDossierId={etapeCorrespondante.id}
@@ -916,7 +929,7 @@ export default function DossierDetail() {
                             <StickyNote className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm font-medium">Notes pour ce document</span>
                           </div>
-                          {isCollaborateur && editingDocumentNotes !== uploaded.id && (
+                          {(isCollaborateur || isAssignedUser) && editingDocumentNotes !== uploaded.id && (
                             <Button
                               size="sm"
                               variant="ghost"

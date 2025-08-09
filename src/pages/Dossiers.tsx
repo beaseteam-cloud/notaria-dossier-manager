@@ -61,7 +61,7 @@ interface Dossier {
 }
 
 export default function Dossiers() {
-  const { isCollaborateur } = useAuth();
+  const { isCollaborateur, user } = useAuth();
   const [dossiers, setDossiers] = useState<Dossier[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,6 +70,7 @@ export default function Dossiers() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [dossierToDelete, setDossierToDelete] = useState<Dossier | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userAssignedDossiers, setUserAssignedDossiers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchDossiers();
@@ -98,6 +99,19 @@ export default function Dossiers() {
       }
 
       setDossiers((data as any) || []);
+
+      // Fetch user assigned dossiers if user is not a collaborateur
+      if (user?.id && !isCollaborateur) {
+        const { data: participantData, error: participantError } = await supabase
+          .from('dossier_participants')
+          .select('dossier_id')
+          .eq('user_id', user.id);
+
+        if (!participantError && participantData) {
+          const assignedDossierIds = new Set(participantData.map(p => p.dossier_id));
+          setUserAssignedDossiers(assignedDossierIds);
+        }
+      }
     } catch (error: any) {
       console.error('Error fetching dossiers:', error);
       toast({
@@ -283,7 +297,7 @@ export default function Dossiers() {
                             <Eye className="w-4 h-4 mr-2" />
                             Voir détails
                           </DropdownMenuItem>
-                          {isCollaborateur && (
+                           {(isCollaborateur || userAssignedDossiers.has(dossier.id)) && (
                             <>
                               <DropdownMenuItem
                                 onClick={() => {
