@@ -174,7 +174,7 @@ export default function DossierDetail() {
 
   // Effect pour recalculer la progression quand les données changent
   useEffect(() => {
-    if (etapes.length > 0 && documentsAttendus.length > 0 && dossier) {
+    if (etapes.length > 0 && dossier) {
       updateDossierProgression();
     }
   }, [etapes, documentsAttendus, documentsUploads]);
@@ -280,7 +280,13 @@ export default function DossierDetail() {
         return newEtapes;
       });
 
-      // La progression sera automatiquement mise à jour via useEffect
+      // Forcer le recalcul de la progression immédiatement
+      // Le useEffect se déclenchera aussi, mais on s'assure que ça se fait
+      setTimeout(() => {
+        if (dossier) {
+          updateDossierProgression();
+        }
+      }, 100);
 
       toast({
         title: "Étape mise à jour",
