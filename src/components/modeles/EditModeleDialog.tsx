@@ -44,9 +44,10 @@ interface EtapeModele {
   ordre: number;
   delai_prevu?: number;
   role_responsable?: 'admin' | 'collaborateur' | 'clerc';
-  nature: 'interne' | 'externe';
+  nature: 'interne' | 'externe' | 'paiement_intermediaire' | 'paiement_final';
   rappel_automatique: boolean;
   delai_rappel?: number;
+  montant_paiement?: number;
   documents_attendus_modeles?: DocumentAttenduModele[];
 }
 
@@ -199,10 +200,11 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
             nom: etape.nom,
             description: etape.description,
             delai_prevu: etape.delai_prevu,
-            role_responsable: etape.role_responsable,
-            nature: etape.nature,
-            rappel_automatique: etape.rappel_automatique,
-            delai_rappel: etape.delai_rappel
+                            role_responsable: etape.role_responsable,
+                            nature: etape.nature,
+                            rappel_automatique: etape.rappel_automatique,
+                            delai_rappel: etape.delai_rappel,
+                            montant_paiement: etape.montant_paiement
           })
           .eq('id', etape.id);
 
@@ -470,11 +472,18 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
                     <AccordionItem key={etape.id} value={etape.id}>
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center justify-between w-full pr-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{etape.ordre}. {etape.nom}</span>
-                            <Badge variant="outline">{etape.nature}</Badge>
-                            <Badge variant="secondary">{etape.role_responsable}</Badge>
-                          </div>
+                           <div className="flex items-center gap-2">
+                             <span className="font-medium">{etape.ordre}. {etape.nom}</span>
+                             <Badge variant="outline">
+                               {etape.nature === 'paiement_intermediaire' ? 'Paiement intermédiaire' : 
+                                etape.nature === 'paiement_final' ? 'Paiement final' : 
+                                etape.nature}
+                             </Badge>
+                             {etape.role_responsable && <Badge variant="secondary">{etape.role_responsable}</Badge>}
+                             {(etape.nature === 'paiement_intermediaire' || etape.nature === 'paiement_final') && etape.montant_paiement && (
+                               <Badge variant="default">{etape.montant_paiement}€</Badge>
+                             )}
+                           </div>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
@@ -532,10 +541,12 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
                                   <SelectTrigger>
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="interne">Interne</SelectItem>
-                                    <SelectItem value="externe">Externe</SelectItem>
-                                  </SelectContent>
+                                   <SelectContent>
+                                     <SelectItem value="interne">Interne</SelectItem>
+                                     <SelectItem value="externe">Externe</SelectItem>
+                                     <SelectItem value="paiement_intermediaire">Paiement intermédiaire</SelectItem>
+                                     <SelectItem value="paiement_final">Paiement final</SelectItem>
+                                   </SelectContent>
                                 </Select>
                               </div>
                             </div>
@@ -558,10 +569,24 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
                                     onChange={(e) => updateEtape(etape.id, 'delai_rappel', parseInt(e.target.value) || 1)}
                                   />
                                 </div>
-                              )}
-                            </div>
+                               )}
+                             </div>
 
-                            <div className="flex gap-2">
+                             {/* Montant pour les étapes de paiement */}
+                             {(etape.nature === 'paiement_intermediaire' || etape.nature === 'paiement_final') && (
+                               <div>
+                                 <Label>Montant du paiement (€)</Label>
+                                 <Input
+                                   type="number"
+                                   step="0.01"
+                                   value={etape.montant_paiement || ''}
+                                   onChange={(e) => updateEtape(etape.id, 'montant_paiement', parseFloat(e.target.value) || null)}
+                                   placeholder="Montant en euros"
+                                 />
+                               </div>
+                             )}
+
+                             <div className="flex gap-2">
                               <Button onClick={() => setEditingEtape(null)} size="sm">
                                 <Save className="w-4 h-4 mr-2" />
                                 Sauvegarder
@@ -579,10 +604,11 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
                                 {etape.description && (
                                   <p className="text-sm text-muted-foreground mb-2">{etape.description}</p>
                                 )}
-                                <p className="text-xs text-muted-foreground">
-                                  Délai prévu: {etape.delai_prevu || 'Non défini'} jours
-                                  {etape.rappel_automatique && ` • Rappel: ${etape.delai_rappel} jour(s) avant`}
-                                </p>
+                                 <p className="text-xs text-muted-foreground">
+                                   Délai prévu: {etape.delai_prevu || 'Non défini'} jours
+                                   {etape.rappel_automatique && ` • Rappel: ${etape.delai_rappel} jour(s) avant`}
+                                   {(etape.nature === 'paiement_intermediaire' || etape.nature === 'paiement_final') && etape.montant_paiement && ` • Montant: ${etape.montant_paiement}€`}
+                                 </p>
                               </div>
                               <Button
                                 onClick={() => setEditingEtape(etape.id)}

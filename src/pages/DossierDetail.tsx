@@ -54,6 +54,10 @@ interface EtapeDossier {
   etape_modele_id: string;
   assignee_id?: string;
   notes?: string;
+  etapes_modeles?: {
+    nature: string;
+    montant_paiement?: number;
+  };
 }
 
 interface DocumentAttendu {
@@ -122,7 +126,10 @@ export default function DossierDetail() {
       // Fetch etapes for this dossier
       const { data: etapesData, error: etapesError } = await supabase
         .from('etapes_dossiers')
-        .select('*')
+        .select(`
+          *,
+          etapes_modeles(nature, montant_paiement)
+        `)
         .eq('dossier_id', id)
         .order('ordre');
 
@@ -514,16 +521,27 @@ export default function DossierDetail() {
           {etapes.map((etape) => {
             const documentsEtape = getDocumentsForEtape(etape.etape_modele_id);
             return (
-              <div key={etape.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <h4 className="font-medium">{etape.nom}</h4>
-                      {etape.description && (
-                        <p className="text-sm text-muted-foreground">{etape.description}</p>
-                      )}
-                    </div>
-                  </div>
+               <div key={etape.id} className="border rounded-lg p-4 space-y-3">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <div>
+                       <div className="flex items-center gap-2">
+                         <h4 className="font-medium">{etape.nom}</h4>
+                         {etape.etapes_modeles?.nature === 'paiement_intermediaire' && (
+                           <Badge variant="outline">Paiement intermédiaire</Badge>
+                         )}
+                         {etape.etapes_modeles?.nature === 'paiement_final' && (
+                           <Badge variant="outline">Paiement final</Badge>
+                         )}
+                         {etape.etapes_modeles?.montant_paiement && (
+                           <Badge variant="default">{etape.etapes_modeles.montant_paiement}€</Badge>
+                         )}
+                       </div>
+                       {etape.description && (
+                         <p className="text-sm text-muted-foreground">{etape.description}</p>
+                       )}
+                     </div>
+                   </div>
                   <div className="flex items-center gap-2">
                     {getStatusBadge(etape.status)}
                     {isCollaborateur && (

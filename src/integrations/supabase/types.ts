@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
@@ -375,6 +375,7 @@ export type Database = {
           delai_rappel: number | null
           description: string | null
           id: string
+          montant_paiement: number | null
           nature: Database["public"]["Enums"]["etape_nature"]
           nom: string
           ordre: number
@@ -388,6 +389,7 @@ export type Database = {
           delai_rappel?: number | null
           description?: string | null
           id?: string
+          montant_paiement?: number | null
           nature?: Database["public"]["Enums"]["etape_nature"]
           nom: string
           ordre: number
@@ -401,6 +403,7 @@ export type Database = {
           delai_rappel?: number | null
           description?: string | null
           id?: string
+          montant_paiement?: number | null
           nature?: Database["public"]["Enums"]["etape_nature"]
           nom?: string
           ordre?: number
@@ -541,7 +544,11 @@ export type Database = {
     Enums: {
       document_origine: "interne" | "externe"
       dossier_status: "en_cours" | "termine" | "suspendu"
-      etape_nature: "interne" | "externe"
+      etape_nature:
+        | "interne"
+        | "externe"
+        | "paiement_intermediaire"
+        | "paiement_final"
       user_role: "admin" | "collaborateur" | "clerc"
     }
     CompositeTypes: {
@@ -672,7 +679,12 @@ export const Constants = {
     Enums: {
       document_origine: ["interne", "externe"],
       dossier_status: ["en_cours", "termine", "suspendu"],
-      etape_nature: ["interne", "externe"],
+      etape_nature: [
+        "interne",
+        "externe",
+        "paiement_intermediaire",
+        "paiement_final",
+      ],
       user_role: ["admin", "collaborateur", "clerc"],
     },
   },
