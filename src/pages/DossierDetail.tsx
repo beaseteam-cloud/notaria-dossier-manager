@@ -174,7 +174,9 @@ export default function DossierDetail() {
 
   // Effect pour recalculer la progression quand les données changent
   useEffect(() => {
+    console.log('useEffect déclenché:', { etapesLength: etapes.length, dossier: !!dossier });
     if (etapes.length > 0 && dossier) {
+      console.log('Conditions remplies, mise à jour de la progression');
       updateDossierProgression();
     }
   }, [etapes, documentsAttendus, documentsUploads]);
@@ -243,6 +245,7 @@ export default function DossierDetail() {
   };
 
   const updateDossierProgression = async () => {
+    console.log('updateDossierProgression appelée');
     const newPercentage = calculateProgressionPercentage();
     
     try {
@@ -322,9 +325,11 @@ export default function DossierDetail() {
         );
         
         // Forcer immédiatement le recalcul de la progression après la mise à jour des étapes
-        setTimeout(() => {
+        // Attendre un tick pour que l'état soit bien mis à jour
+        Promise.resolve().then(() => {
+          console.log('Forçage du recalcul de progression après mise à jour étape');
           updateDossierProgression();
-        }, 50);
+        });
         
         return newEtapes;
       });
