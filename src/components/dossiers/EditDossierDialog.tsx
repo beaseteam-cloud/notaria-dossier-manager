@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { ParticipantManager } from './ParticipantManager';
 
 interface Dossier {
   id: string;
@@ -346,6 +347,11 @@ export function EditDossierDialog({ dossier, open, onOpenChange, onSuccess }: Ed
               placeholder="Notes concernant les retards éventuels"
               rows={3}
             />
+          </div>
+
+          {/* Gestion des participants */}
+          <div className="border-t pt-6">
+            <ParticipantManager dossierId={dossier.id} />
           </div>
         </div>
 
