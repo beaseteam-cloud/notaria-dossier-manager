@@ -57,9 +57,10 @@ interface EtapeModele {
   ordre: number;
   delai_prevu?: number;
   role_responsable?: 'admin' | 'collaborateur' | 'clerc';
-  nature: 'interne' | 'externe';
+  nature: 'interne' | 'externe' | 'paiement_intermediaire' | 'paiement_final';
   rappel_automatique: boolean;
   delai_rappel?: number;
+  montant_paiement?: number;
   documents_attendus_modeles?: DocumentAttenduModele[];
 }
 
@@ -76,9 +77,10 @@ interface NewEtape {
   description: string;
   delai_prevu: number;
   role_responsable: 'admin' | 'collaborateur' | 'clerc';
-  nature: 'interne' | 'externe';
+  nature: 'interne' | 'externe' | 'paiement_intermediaire' | 'paiement_final';
   rappel_automatique: boolean;
   delai_rappel: number;
+  montant_paiement?: number;
   documents: DocumentAttenduModele[];
 }
 
@@ -142,13 +144,14 @@ export default function Modeles() {
             id,
             nom,
             description,
-            ordre,
-            delai_prevu,
-            role_responsable,
-            nature,
-            rappel_automatique,
-            delai_rappel,
-            documents_attendus_modeles(
+             ordre,
+             delai_prevu,
+             role_responsable,
+             nature,
+             rappel_automatique,
+             delai_rappel,
+             montant_paiement,
+             documents_attendus_modeles(
               id,
               nom,
               description,
@@ -261,17 +264,18 @@ export default function Modeles() {
         
         const { data: etapeData, error: etapeError } = await supabase
           .from('etapes_modeles')
-          .insert({
-            procedure_modele_id: modeleData.id,
-            nom: etape.nom,
-            description: etape.description,
-            ordre: i + 1,
-            delai_prevu: etape.delai_prevu,
-            role_responsable: etape.role_responsable,
-            nature: etape.nature,
-            rappel_automatique: etape.rappel_automatique,
-            delai_rappel: etape.delai_rappel
-          })
+           .insert({
+             procedure_modele_id: modeleData.id,
+             nom: etape.nom,
+             description: etape.description,
+             ordre: i + 1,
+             delai_prevu: etape.delai_prevu,
+             role_responsable: etape.role_responsable,
+             nature: etape.nature,
+             rappel_automatique: etape.rappel_automatique,
+             delai_rappel: etape.delai_rappel,
+             montant_paiement: etape.montant_paiement
+           })
           .select()
           .single();
 
@@ -450,15 +454,31 @@ export default function Modeles() {
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="interne">Interne</SelectItem>
-                            <SelectItem value="externe">Externe</SelectItem>
-                          </SelectContent>
+                           <SelectContent>
+                             <SelectItem value="interne">Interne</SelectItem>
+                             <SelectItem value="externe">Externe</SelectItem>
+                             <SelectItem value="paiement_intermediaire">Paiement intermédiaire</SelectItem>
+                             <SelectItem value="paiement_final">Paiement final</SelectItem>
+                           </SelectContent>
                         </Select>
-                      </div>
-                    </div>
+                       </div>
+                     </div>
 
-                    <div className="flex items-center space-x-2">
+                     {/* Montant pour les étapes de paiement */}
+                     {(newEtape.nature === 'paiement_intermediaire' || newEtape.nature === 'paiement_final') && (
+                       <div>
+                         <Label>Montant du paiement (€)</Label>
+                         <Input
+                           type="number"
+                           step="0.01"
+                           value={newEtape.montant_paiement || ''}
+                           onChange={(e) => setNewEtape(prev => ({ ...prev, montant_paiement: parseFloat(e.target.value) || undefined }))}
+                           placeholder="Montant en euros"
+                         />
+                       </div>
+                     )}
+
+                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={newEtape.rappel_automatique}
                         onCheckedChange={(checked) => setNewEtape(prev => ({ ...prev, rappel_automatique: checked }))}
@@ -539,22 +559,31 @@ export default function Modeles() {
                         <div key={index} className="p-4 border rounded-lg">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline">{index + 1}</Badge>
-                                <span className="font-medium">{etape.nom}</span>
-                                <Badge className={etape.nature === 'externe' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
-                                  {etape.nature}
-                                </Badge>
-                                <Badge variant="secondary">{etape.role_responsable}</Badge>
-                              </div>
+                               <div className="flex items-center gap-2">
+                                 <Badge variant="outline">{index + 1}</Badge>
+                                 <span className="font-medium">{etape.nom}</span>
+                                 <Badge className={
+                                   etape.nature === 'paiement_intermediaire' ? 'bg-orange-100 text-orange-800' :
+                                   etape.nature === 'paiement_final' ? 'bg-red-100 text-red-800' :
+                                   etape.nature === 'externe' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                                 }>
+                                   {etape.nature === 'paiement_intermediaire' ? 'Paiement intermédiaire' :
+                                    etape.nature === 'paiement_final' ? 'Paiement final' : etape.nature}
+                                 </Badge>
+                                 <Badge variant="secondary">{etape.role_responsable}</Badge>
+                                 {etape.montant_paiement && (
+                                   <Badge variant="default">{etape.montant_paiement}€</Badge>
+                                 )}
+                               </div>
                               {etape.description && (
                                 <p className="text-sm text-muted-foreground mt-1">{etape.description}</p>
                               )}
-                              <div className="text-xs text-muted-foreground mt-2">
-                                Délai: {etape.delai_prevu} jours
-                                {etape.rappel_automatique && ` • Rappel: ${etape.delai_rappel} jour(s) avant`}
-                                {etape.documents.length > 0 && ` • ${etape.documents.length} document(s)`}
-                              </div>
+                               <div className="text-xs text-muted-foreground mt-2">
+                                 Délai: {etape.delai_prevu} jours
+                                 {etape.rappel_automatique && ` • Rappel: ${etape.delai_rappel} jour(s) avant`}
+                                 {etape.documents.length > 0 && ` • ${etape.documents.length} document(s)`}
+                                 {etape.montant_paiement && ` • Montant: ${etape.montant_paiement}€`}
+                               </div>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => removeEtapeFromModele(index)}>
                               <Trash className="w-4 h-4" />
@@ -652,23 +681,32 @@ export default function Modeles() {
                         .sort((a, b) => a.ordre - b.ordre)
                         .map((etape) => (
                           <div key={etape.id} className="ml-6 p-3 bg-muted/50 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline">{etape.ordre}</Badge>
-                              <span className="font-medium">{etape.nom}</span>
-                              <Badge className={etape.nature === 'externe' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
-                                {etape.nature}
-                              </Badge>
-                              {etape.role_responsable && (
-                                <Badge variant="secondary">{etape.role_responsable}</Badge>
-                              )}
-                            </div>
+                             <div className="flex items-center gap-2 mb-2">
+                               <Badge variant="outline">{etape.ordre}</Badge>
+                               <span className="font-medium">{etape.nom}</span>
+                               <Badge className={
+                                 etape.nature === 'paiement_intermediaire' ? 'bg-orange-100 text-orange-800' :
+                                 etape.nature === 'paiement_final' ? 'bg-red-100 text-red-800' :
+                                 etape.nature === 'externe' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                               }>
+                                 {etape.nature === 'paiement_intermediaire' ? 'Paiement intermédiaire' :
+                                  etape.nature === 'paiement_final' ? 'Paiement final' : etape.nature}
+                               </Badge>
+                               {etape.role_responsable && (
+                                 <Badge variant="secondary">{etape.role_responsable}</Badge>
+                               )}
+                               {etape.montant_paiement && (
+                                 <Badge variant="default">{etape.montant_paiement}€</Badge>
+                               )}
+                             </div>
                             {etape.description && (
                               <p className="text-sm text-muted-foreground mb-2">{etape.description}</p>
                             )}
-                            <div className="text-xs text-muted-foreground mb-2">
-                              Délai prévu: {etape.delai_prevu || 'Non défini'} jours
-                              {etape.rappel_automatique && ` • Rappel: ${etape.delai_rappel} jour(s) avant`}
-                            </div>
+                             <div className="text-xs text-muted-foreground mb-2">
+                               Délai prévu: {etape.delai_prevu || 'Non défini'} jours
+                               {etape.rappel_automatique && ` • Rappel: ${etape.delai_rappel} jour(s) avant`}
+                               {etape.montant_paiement && ` • Montant: ${etape.montant_paiement}€`}
+                             </div>
                             
                             {etape.documents_attendus_modeles && etape.documents_attendus_modeles.length > 0 && (
                               <div className="mt-2">
