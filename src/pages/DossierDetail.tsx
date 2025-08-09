@@ -320,16 +320,14 @@ export default function DossierDetail() {
             ? { ...e, ...fullEtapeData }
             : e
         );
+        
+        // Forcer immédiatement le recalcul de la progression après la mise à jour des étapes
+        setTimeout(() => {
+          updateDossierProgression();
+        }, 50);
+        
         return newEtapes;
       });
-
-      // Forcer le recalcul de la progression immédiatement
-      // Le useEffect se déclenchera aussi, mais on s'assure que ça se fait
-      setTimeout(() => {
-        if (dossier) {
-          updateDossierProgression();
-        }
-      }, 100);
 
       // Si c'est une étape de paiement qui passe à "termine", 
       // on met à jour les montants du dossier
