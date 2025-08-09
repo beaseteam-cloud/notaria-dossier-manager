@@ -11,7 +11,7 @@ import Dossiers from "./pages/Dossiers";
 import DossierDetail from "./pages/DossierDetail";
 import Modeles from "./pages/Modeles";
 import Utilisateurs from "./pages/Utilisateurs";
-
+import FraisDetails from "./pages/FraisDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +42,7 @@ function AppRoutes() {
         <Route path="dossiers/:id" element={<DossierDetail />} />
         <Route path="modeles" element={<Modeles />} />
         
+        <Route path="frais" element={<FraisDetails />} />
         <Route path="utilisateurs" element={<Utilisateurs />} />
       </Route>
       <Route path="*" element={<NotFound />} />

@@ -301,9 +301,12 @@ export default function Dashboard() {
               <span className="text-sm text-muted-foreground">Étapes en attente</span>
               <Badge variant="outline">{stats.etapesEnAttente}</Badge>
             </div>
-            <div className="flex items-center justify-between">
+            <div 
+              className="flex items-center justify-between cursor-pointer hover:bg-muted/30 p-2 rounded-md transition-colors"
+              onClick={() => navigate('/frais')}
+            >
               <span className="text-sm text-muted-foreground">Frais totaux</span>
-              <span className="font-medium text-notaria-gold">
+              <span className="font-medium text-notaria-gold hover:text-notaria-gold/80 transition-colors">
                 {formatCurrency(stats.totalFrais)}
               </span>
             </div>
