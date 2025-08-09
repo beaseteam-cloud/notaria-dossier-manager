@@ -305,6 +305,8 @@ export type Database = {
       etapes_dossiers: {
         Row: {
           assignee_id: string | null
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
           date_debut: string | null
           date_fin_prevue: string | null
@@ -321,6 +323,8 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           date_debut?: string | null
           date_fin_prevue?: string | null
@@ -337,6 +341,8 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           date_debut?: string | null
           date_fin_prevue?: string | null

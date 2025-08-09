@@ -26,6 +26,7 @@ import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { DocumentViewer } from '@/components/documents/DocumentViewer';
 import { FreeDocumentUpload } from '@/components/documents/FreeDocumentUpload';
 import { EditDossierDialog } from '@/components/dossiers/EditDossierDialog';
+import ActivityHistory from '@/components/dossiers/ActivityHistory';
 
 interface DossierDetail {
   id: string;
@@ -855,6 +856,9 @@ export default function DossierDetail() {
           })}
         </CardContent>
       </Card>
+
+      {/* Historique des actions */}
+      {id && <ActivityHistory dossierId={id} />}
 
       {/* Section Documents */}
       <Card className="notaria-card">
