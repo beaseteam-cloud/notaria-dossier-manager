@@ -16,8 +16,7 @@ import {
   Home, 
   FolderOpen, 
   FileText, 
-  Users, 
-  Bell
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -25,7 +24,6 @@ const menuItems = [
   { title: 'Tableau de bord', url: '/', icon: Home },
   { title: 'Dossiers', url: '/dossiers', icon: FolderOpen },
   { title: 'Modèles', url: '/modeles', icon: FileText },
-  { title: 'Notifications', url: '/notifications', icon: Bell },
 ];
 
 const adminItems = [

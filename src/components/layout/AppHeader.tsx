@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { NotificationButton } from '@/components/notifications/NotificationButton';
+
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +49,6 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center gap-4">
-          <NotificationButton />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
