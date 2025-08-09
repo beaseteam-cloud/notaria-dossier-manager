@@ -41,29 +41,34 @@ export default function FraisDetails() {
           client_nom,
           status,
           montant_frais,
-          created_at,
-          etape_courante_id
+          created_at
         `)
         .not('montant_frais', 'is', null)
         .gt('montant_frais', 0);
 
       if (dossiersError) throw dossiersError;
 
-      // Récupérer les noms des étapes courantes
+      // Récupérer les étapes qui ont généré les frais
       const dossiersWithEtapes = await Promise.all(
         dossiersData?.map(async (dossier) => {
-          let etapeNom = 'Étape non définie';
+          let etapeNom = 'Frais du dossier';
           
-          if (dossier.etape_courante_id) {
-            const { data: etapeData } = await supabase
-              .from('etapes_dossiers')
-              .select('nom')
-              .eq('id', dossier.etape_courante_id)
-              .single();
-            
-            if (etapeData) {
-              etapeNom = etapeData.nom;
-            }
+          // Chercher l'étape de type paiement qui correspond au montant
+          const { data: etapesData } = await supabase
+            .from('etapes_dossiers')
+            .select(`
+              nom,
+              etapes_modeles!inner(
+                nature,
+                montant_paiement
+              )
+            `)
+            .eq('dossier_id', dossier.id)
+            .eq('etapes_modeles.nature', 'paiement_intermediaire')
+            .eq('etapes_modeles.montant_paiement', dossier.montant_frais);
+          
+          if (etapesData && etapesData.length > 0) {
+            etapeNom = etapesData[0].nom;
           }
 
           return {
