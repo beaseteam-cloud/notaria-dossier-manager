@@ -204,7 +204,9 @@ export default function DossierDetail() {
 
     try {
       // Calculer le nouveau montant total des frais
-      const nouveauMontantFrais = (dossier.montant_frais || 0) + montantPaiement;
+      // Gérer le cas où montant_frais est null
+      const montantActuel = dossier.montant_frais || 0;
+      const nouveauMontantFrais = montantActuel + montantPaiement;
 
       const { error } = await supabase
         .from('dossiers')
@@ -333,7 +335,9 @@ export default function DossierDetail() {
       // on met à jour les montants du dossier
       if (newStatus === 'termine') {
         const etapeModele = etapes.find(e => e.id === etapeId)?.etapes_modeles;
-        if (etapeModele?.nature === 'paiement' && etapeModele.montant_paiement) {
+        console.log('Etape terminée, vérification paiement:', { etapeId, etapeModele });
+        if (etapeModele?.nature?.includes('paiement') && etapeModele.montant_paiement) {
+          console.log('Paiement détecté, montant:', etapeModele.montant_paiement);
           await updateDossierPaymentAmount(etapeModele.montant_paiement);
         }
       }
