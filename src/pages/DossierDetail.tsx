@@ -199,6 +199,47 @@ export default function DossierDetail() {
     return Math.round((elementsCompletes / totalElements) * 100);
   };
 
+  const updateDossierPaymentAmount = async (montantPaiement: number) => {
+    if (!dossier) return;
+
+    try {
+      // Calculer le nouveau montant total des frais
+      const nouveauMontantFrais = (dossier.montant_frais || 0) + montantPaiement;
+
+      const { error } = await supabase
+        .from('dossiers')
+        .update({ 
+          montant_frais: nouveauMontantFrais,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', dossier.id);
+
+      if (error) throw error;
+
+      // Mettre à jour l'état local
+      setDossier(prev => prev ? { 
+        ...prev, 
+        montant_frais: nouveauMontantFrais 
+      } : null);
+
+      // Déclencher un événement global pour que le Dashboard se mette à jour
+      window.dispatchEvent(new CustomEvent('dossierPaymentUpdated'));
+
+      toast({
+        title: "Paiement enregistré",
+        description: `Montant de ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(montantPaiement)} ajouté aux frais du dossier`,
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du montant:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour le montant du dossier",
+      });
+    }
+  };
+
   const updateDossierProgression = async () => {
     const newPercentage = calculateProgressionPercentage();
     
@@ -287,6 +328,15 @@ export default function DossierDetail() {
           updateDossierProgression();
         }
       }, 100);
+
+      // Si c'est une étape de paiement qui passe à "termine", 
+      // on met à jour les montants du dossier
+      if (newStatus === 'termine') {
+        const etapeModele = etapes.find(e => e.id === etapeId)?.etapes_modeles;
+        if (etapeModele?.nature === 'paiement' && etapeModele.montant_paiement) {
+          await updateDossierPaymentAmount(etapeModele.montant_paiement);
+        }
+      }
 
       toast({
         title: "Étape mise à jour",

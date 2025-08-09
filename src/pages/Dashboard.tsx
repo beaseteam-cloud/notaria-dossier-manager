@@ -52,6 +52,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Écouter les événements de mise à jour des paiements
+    const handlePaymentUpdate = () => {
+      fetchDashboardData();
+    };
+
+    window.addEventListener('dossierPaymentUpdated', handlePaymentUpdate);
+    
+    return () => {
+      window.removeEventListener('dossierPaymentUpdated', handlePaymentUpdate);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
