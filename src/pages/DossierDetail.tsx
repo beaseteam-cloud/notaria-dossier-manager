@@ -163,14 +163,23 @@ export default function DossierDetail() {
 
       // Check if current user is assigned to this dossier
       if (user?.id) {
-        const { data: participantData, error: participantError } = await supabase
-          .from('dossier_participants')
+        // Get the profile ID first
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
           .select('id')
-          .eq('dossier_id', id)
           .eq('user_id', user.id)
           .single();
 
-        setIsAssignedUser(!!participantData && !participantError);
+        if (profileData && !profileError) {
+          const { data: participantData, error: participantError } = await supabase
+            .from('dossier_participants')
+            .select('id')
+            .eq('dossier_id', id)
+            .eq('user_id', profileData.id)
+            .single();
+
+          setIsAssignedUser(!!participantData && !participantError);
+        }
       }
 
     } catch (error: any) {

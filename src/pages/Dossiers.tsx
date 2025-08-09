@@ -102,14 +102,23 @@ export default function Dossiers() {
 
       // Fetch user assigned dossiers if user is not a collaborateur
       if (user?.id && !isCollaborateur) {
-        const { data: participantData, error: participantError } = await supabase
-          .from('dossier_participants')
-          .select('dossier_id')
-          .eq('user_id', user.id);
+        // Get the profile ID first
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-        if (!participantError && participantData) {
-          const assignedDossierIds = new Set(participantData.map(p => p.dossier_id));
-          setUserAssignedDossiers(assignedDossierIds);
+        if (profileData && !profileError) {
+          const { data: participantData, error: participantError } = await supabase
+            .from('dossier_participants')
+            .select('dossier_id')
+            .eq('user_id', profileData.id);
+
+          if (!participantError && participantData) {
+            const assignedDossierIds = new Set(participantData.map(p => p.dossier_id));
+            setUserAssignedDossiers(assignedDossierIds);
+          }
         }
       }
     } catch (error: any) {
