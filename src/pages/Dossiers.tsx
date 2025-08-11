@@ -74,6 +74,27 @@ export default function Dossiers() {
 
   useEffect(() => {
     fetchDossiers();
+
+    // Set up real-time listener for participant changes
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dossier_participants'
+        },
+        () => {
+          // Refetch dossiers when participants change
+          fetchDossiers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchDossiers = async () => {

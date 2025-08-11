@@ -53,6 +53,23 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboardData();
 
+    // Set up real-time listener for participant changes
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dossier_participants'
+        },
+        () => {
+          // Refetch dashboard data when participants change
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
     // Écouter les événements de mise à jour des paiements
     const handlePaymentUpdate = () => {
       fetchDashboardData();
@@ -62,6 +79,7 @@ export default function Dashboard() {
     
     return () => {
       window.removeEventListener('dossierPaymentUpdated', handlePaymentUpdate);
+      supabase.removeChannel(channel);
     };
   }, []);
 
