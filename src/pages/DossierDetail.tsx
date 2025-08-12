@@ -120,9 +120,20 @@ export default function DossierDetail() {
           procedure_modeles(nom)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (dossierError) throw dossierError;
+      
+      if (!dossierData) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Dossier non trouvé",
+        });
+        navigate('/dossiers');
+        return;
+      }
+      
       setDossier(dossierData);
 
       // Fetch etapes for this dossier
