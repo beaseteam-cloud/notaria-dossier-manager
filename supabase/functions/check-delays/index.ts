@@ -12,9 +12,70 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require authentication - only service role or admin can call this endpoint
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('No authorization header provided');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - missing authorization header' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    // Allow service role key for cron jobs
+    if (token === serviceRoleKey) {
+      console.log('Authenticated via service role key');
+    } else {
+      // Verify if it's an admin user token
+      const supabaseAuth = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        serviceRoleKey,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+      
+      if (authError || !user) {
+        console.error('Invalid token:', authError);
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - invalid token' }),
+          { 
+            status: 401, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Check if user is admin
+      const { data: profile, error: profileError } = await supabaseAuth
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profileError || !profile || profile.role !== 'admin') {
+        console.error('User is not admin:', { userId: user.id, role: profile?.role });
+        return new Response(
+          JSON.stringify({ error: 'Forbidden - admin access required' }),
+          { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      console.log('Authenticated via admin user:', user.id);
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      serviceRoleKey,
       {
         auth: {
           autoRefreshToken: false,
