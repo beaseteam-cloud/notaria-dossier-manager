@@ -22,6 +22,15 @@ export function FreeDocumentUpload({ dossierId, onUploadSuccess }: FreeDocumentU
   const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
 
+  // Allowed MIME types for document uploads
+  const ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg',
+    'image/png'
+  ];
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -34,6 +43,17 @@ export function FreeDocumentUpload({ dossierId, onUploadSuccess }: FreeDocumentU
         });
         return;
       }
+      
+      // Validate MIME type
+      if (!ALLOWED_MIME_TYPES.includes(selectedFile.type)) {
+        toast({
+          variant: "destructive",
+          title: "Type de fichier non autorisé",
+          description: "Formats acceptés: PDF, DOC, DOCX, JPG, PNG",
+        });
+        return;
+      }
+      
       setFile(selectedFile);
       // Auto-fill document name with file name if empty
       if (!documentName) {
@@ -71,20 +91,18 @@ export function FreeDocumentUpload({ dossierId, onUploadSuccess }: FreeDocumentU
 
       console.log('File uploaded successfully:', uploadData);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('documents')
-        .getPublicUrl(fileName);
+      // Store the file path (not public URL) since bucket is private
+      const filePath = fileName;
 
-      console.log('Generated public URL:', publicUrl);
+      console.log('Storing file path:', filePath);
 
-      // Save document record to database
+      // Save document record to database with file path
       const documentData = {
         dossier_id: dossierId,
         nom: documentName.trim(),
         description: description.trim() || null,
         fichier_nom: file.name,
-        fichier_url: publicUrl,
+        fichier_url: filePath,
         type_mime: file.type,
         taille_fichier: file.size,
         uploaded_by: user.id,
