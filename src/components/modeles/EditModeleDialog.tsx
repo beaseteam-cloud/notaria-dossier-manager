@@ -98,7 +98,7 @@ export function EditModeleDialog({ modele, open, onOpenChange, onSuccess }: Edit
     try {
       // Get all dossiers using this modele
       const { data: dossiers, error: dossiersError } = await supabase
-        .from('dossiers')
+        .from('dossiers_secure')
         .select('id')
         .eq('procedure_modele_id', modeleId);
 

@@ -89,7 +89,7 @@ export default function Dashboard() {
       
       // Fetch dossiers statistics
       const { data: dossiers, error: dossiersError } = await supabase
-        .from('dossiers')
+        .from('dossiers_secure')
         .select(`
           id,
           nom,

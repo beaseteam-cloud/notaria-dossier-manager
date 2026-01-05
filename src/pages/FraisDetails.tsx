@@ -34,7 +34,7 @@ export default function FraisDetails() {
     try {
       // Récupérer les dossiers avec leurs frais
       const { data: dossiersData, error: dossiersError } = await supabase
-        .from('dossiers')
+        .from('dossiers_secure')
         .select(`
           id,
           nom,

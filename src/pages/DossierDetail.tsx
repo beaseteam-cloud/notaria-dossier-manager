@@ -106,7 +106,7 @@ export default function DossierDetail() {
     try {
       // Fetch dossier details
       const { data: dossierData, error: dossierError } = await supabase
-        .from('dossiers')
+        .from('dossiers_secure')
         .select(`
           id,
           nom,

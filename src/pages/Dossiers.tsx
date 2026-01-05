@@ -100,7 +100,7 @@ export default function Dossiers() {
   const fetchDossiers = async () => {
     try {
       const { data, error } = await supabase
-        .from('dossiers')
+        .from('dossiers_secure')
         .select(`
           id,
           nom,

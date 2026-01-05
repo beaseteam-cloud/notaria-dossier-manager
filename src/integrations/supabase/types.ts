@@ -53,6 +53,13 @@ export type Database = {
             referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_logs_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       documents_attendus_modeles: {
@@ -155,6 +162,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "documents_dossiers_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers_secure"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_dossiers_etape_dossier_id_fkey"
             columns: ["etape_dossier_id"]
             isOneToOne: false
@@ -194,6 +208,13 @@ export type Database = {
             columns: ["dossier_id"]
             isOneToOne: false
             referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossier_participants_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -366,6 +387,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "etapes_dossiers_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers_secure"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "etapes_dossiers_etape_modele_id_fkey"
             columns: ["etape_modele_id"]
             isOneToOne: false
@@ -466,6 +494,13 @@ export type Database = {
             referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       procedure_modeles: {
@@ -539,7 +574,110 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dossiers_secure: {
+        Row: {
+          client_adresse: string | null
+          client_email: string | null
+          client_nom: string | null
+          client_prenom: string | null
+          client_telephone: string | null
+          created_at: string | null
+          created_by: string | null
+          date_creation: string | null
+          date_depot_capital: string | null
+          date_fin: string | null
+          date_note_frais: string | null
+          date_provisions: string | null
+          date_reglement_partiel: string | null
+          date_reglement_solde: string | null
+          description: string | null
+          etape_courante_id: string | null
+          id: string | null
+          montant_depot_capital: number | null
+          montant_frais: number | null
+          montant_provisions: number | null
+          montant_reglement_partiel: number | null
+          montant_solde: number | null
+          nom: string | null
+          notes_retard: string | null
+          pourcentage_completion: number | null
+          procedure_modele_id: string | null
+          situation_fiscale: string | null
+          status: Database["public"]["Enums"]["dossier_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_adresse?: never
+          client_email?: never
+          client_nom?: string | null
+          client_prenom?: string | null
+          client_telephone?: never
+          created_at?: string | null
+          created_by?: string | null
+          date_creation?: string | null
+          date_depot_capital?: never
+          date_fin?: string | null
+          date_note_frais?: never
+          date_provisions?: never
+          date_reglement_partiel?: never
+          date_reglement_solde?: never
+          description?: string | null
+          etape_courante_id?: string | null
+          id?: string | null
+          montant_depot_capital?: never
+          montant_frais?: never
+          montant_provisions?: never
+          montant_reglement_partiel?: never
+          montant_solde?: never
+          nom?: string | null
+          notes_retard?: string | null
+          pourcentage_completion?: number | null
+          procedure_modele_id?: string | null
+          situation_fiscale?: string | null
+          status?: Database["public"]["Enums"]["dossier_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_adresse?: never
+          client_email?: never
+          client_nom?: string | null
+          client_prenom?: string | null
+          client_telephone?: never
+          created_at?: string | null
+          created_by?: string | null
+          date_creation?: string | null
+          date_depot_capital?: never
+          date_fin?: string | null
+          date_note_frais?: never
+          date_provisions?: never
+          date_reglement_partiel?: never
+          date_reglement_solde?: never
+          description?: string | null
+          etape_courante_id?: string | null
+          id?: string | null
+          montant_depot_capital?: never
+          montant_frais?: never
+          montant_provisions?: never
+          montant_reglement_partiel?: never
+          montant_solde?: never
+          nom?: string | null
+          notes_retard?: string | null
+          pourcentage_completion?: number | null
+          procedure_modele_id?: string | null
+          situation_fiscale?: string | null
+          status?: Database["public"]["Enums"]["dossier_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossiers_procedure_modele_id_fkey"
+            columns: ["procedure_modele_id"]
+            isOneToOne: false
+            referencedRelation: "procedure_modeles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_current_profile_id: { Args: never; Returns: string }
