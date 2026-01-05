@@ -101,7 +101,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Verify old password by attempting to sign in with it
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    // Use a separate client for password verification to avoid session issues
+    const verifyClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    const { data: signInData, error: signInError } = await verifyClient.auth.signInWithPassword({
       email: userData.user.email!,
       password: oldPassword,
     });
@@ -114,6 +126,11 @@ const handler = async (req: Request): Promise<Response> => {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
+    }
+
+    // Sign out immediately to clean up the temporary session
+    if (signInData?.session) {
+      await verifyClient.auth.signOut();
     }
 
     // Update the user's password using admin API
