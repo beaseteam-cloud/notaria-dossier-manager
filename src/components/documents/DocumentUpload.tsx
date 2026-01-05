@@ -27,6 +27,15 @@ export function DocumentUpload({
   const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
 
+  // Allowed MIME types for document uploads
+  const ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg',
+    'image/png'
+  ];
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -39,6 +48,17 @@ export function DocumentUpload({
         });
         return;
       }
+      
+      // Validate MIME type
+      if (!ALLOWED_MIME_TYPES.includes(selectedFile.type)) {
+        toast({
+          variant: "destructive",
+          title: "Type de fichier non autorisé",
+          description: "Formats acceptés: PDF, DOC, DOCX, JPG, PNG",
+        });
+        return;
+      }
+      
       setFile(selectedFile);
     }
   };
@@ -64,21 +84,19 @@ export function DocumentUpload({
 
       console.log('File uploaded successfully:', uploadData);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('documents')
-        .getPublicUrl(fileName);
+      // Store the file path (not public URL) since bucket is private
+      const filePath = fileName;
 
-      console.log('Generated public URL:', publicUrl);
+      console.log('Storing file path:', filePath);
 
-      // Save document record to database
+      // Save document record to database with file path
       console.log('Saving document record to database:', {
         dossier_id: dossierId,
         etape_dossier_id: etapeDossierId,
         document_attendu_modele_id: documentAttenduId,
         nom: documentNom,
         fichier_nom: file.name,
-        fichier_url: publicUrl,
+        fichier_url: filePath,
         type_mime: file.type,
         taille_fichier: file.size,
         uploaded_by: user.id,
@@ -92,7 +110,7 @@ export function DocumentUpload({
           document_attendu_modele_id: documentAttenduId,
           nom: documentNom,
           fichier_nom: file.name,
-          fichier_url: publicUrl,
+          fichier_url: filePath,
           type_mime: file.type,
           taille_fichier: file.size,
           uploaded_by: user.id,
