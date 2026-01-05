@@ -14,38 +14,96 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { userId } = await req.json();
-    
-    console.log("Attempting to delete user:", userId);
-
     // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Get the authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Verify the user making the request
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Check if user is admin
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileError || !profile || profile.role !== "admin") {
+      console.error("Insufficient permissions - user role:", profile?.role);
+      return new Response(
+        JSON.stringify({ error: "Insufficient permissions - admin role required" }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Now proceed with deletion
+    const { userId } = await req.json();
+    
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Missing userId" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log("Admin", user.id, "attempting to delete user:", userId);
+
     // First delete the profile
-    const { error: profileError } = await supabaseAdmin
+    const { error: deleteProfileError } = await supabaseAdmin
       .from("profiles")
       .delete()
       .eq("user_id", userId);
 
-    if (profileError) {
-      console.error("Profile deletion error:", profileError);
-      throw new Error(`Erreur suppression profil: ${profileError.message}`);
+    if (deleteProfileError) {
+      console.error("Profile deletion error:", deleteProfileError);
+      throw new Error(`Erreur suppression profil: ${deleteProfileError.message}`);
     }
 
     console.log("Profile deleted successfully");
 
     // Then delete the user from auth (ignore if already deleted)
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
-    if (authError && authError.message !== "User not found") {
-      console.error("Auth deletion error:", authError);
-      throw new Error(`Erreur suppression auth: ${authError.message}`);
+    if (deleteAuthError && deleteAuthError.message !== "User not found") {
+      console.error("Auth deletion error:", deleteAuthError);
+      throw new Error(`Erreur suppression auth: ${deleteAuthError.message}`);
     }
 
-    if (authError && authError.message === "User not found") {
+    if (deleteAuthError && deleteAuthError.message === "User not found") {
       console.log("User was already deleted from auth");
     } else {
       console.log("User deleted successfully from auth");
