@@ -317,9 +317,36 @@ export default function DossierDetail() {
     }
   };
 
+  const getMissingDocuments = (etapeId: string) => {
+    const etape = etapes.find(e => e.id === etapeId);
+    if (!etape) return [];
+    const attendus = documentsAttendus.filter(
+      d => d.etape_modele_id === etape.etape_modele_id && d.obligatoire
+    );
+    return attendus.filter(
+      d => !documentsUploads.some(
+        u => u.document_attendu_modele_id === d.id ||
+          (u.etape_dossier_id === etapeId && u.nom === d.nom)
+      )
+    );
+  };
+
   const updateEtapeStatus = async (etapeId: string, newStatus: string) => {
     try {
+      if (newStatus === 'termine') {
+        const missing = getMissingDocuments(etapeId);
+        if (missing.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "Documents manquants",
+            description: `Impossible de clôturer cette étape : ${missing.map(m => m.nom).join(', ')} ${missing.length > 1 ? 'doivent' : 'doit'} être téléversé${missing.length > 1 ? 's' : ''}.`,
+          });
+          return;
+        }
+      }
+
       const updates: any = { status: newStatus };
+
       
       if (newStatus === 'termine') {
         updates.date_fin_reelle = new Date().toISOString();
