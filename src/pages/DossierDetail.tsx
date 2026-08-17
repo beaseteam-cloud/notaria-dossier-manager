@@ -76,6 +76,7 @@ interface DocumentDossier {
   fichier_nom?: string;
   date_upload: string;
   document_attendu_modele_id?: string;
+  etape_dossier_id?: string;
   type_mime?: string;
   taille_fichier?: number;
   description?: string;
