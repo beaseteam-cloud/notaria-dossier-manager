@@ -370,13 +370,15 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
                                 <Checkbox
                                   checked={field.value?.includes(profile.id)}
                                   onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...(field.value || []), profile.id])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== profile.id
-                                          )
-                                        );
+                                    if (checked) {
+                                      return field.onChange([...(field.value || []), profile.id]);
+                                    }
+                                    if (form.getValues('manager_id') === profile.id) {
+                                      form.setValue('manager_id', '');
+                                    }
+                                    return field.onChange(
+                                      field.value?.filter((value) => value !== profile.id)
+                                    );
                                   }}
                                 />
                               </FormControl>
@@ -393,6 +395,47 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="manager_id"
+              render={({ field }) => {
+                const selected = form.watch('participants') || [];
+                const selectedProfiles = profiles.filter((p) => selected.includes(p.id));
+                return (
+                  <FormItem>
+                    <FormLabel>Manager du dossier (optionnel)</FormLabel>
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+                      disabled={selectedProfiles.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              selectedProfiles.length === 0
+                                ? 'Sélectionnez d\'abord des participants'
+                                : 'Aucun manager'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Aucun manager</SelectItem>
+                        {selectedProfiles.map((profile) => (
+                          <SelectItem key={profile.id} value={profile.id}>
+                            {profile.prenom} {profile.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button
