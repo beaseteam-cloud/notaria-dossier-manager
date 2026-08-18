@@ -43,6 +43,7 @@ const formSchema = z.object({
   client_adresse: z.string().optional(),
   procedure_modele_id: z.string().min(1, 'Le modèle de procédure est obligatoire'),
   participants: z.array(z.string()).optional(),
+  manager_id: z.string().optional(),
 });
 
 interface ProcedureModele {
@@ -80,6 +81,7 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
       client_adresse: '',
       procedure_modele_id: '',
       participants: [],
+      manager_id: '',
     },
   });
 
@@ -160,7 +162,7 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
         const participantsData = values.participants.map(userId => ({
           dossier_id: dossier.id,
           user_id: userId,
-          role_dossier: 'participant',
+          role_dossier: values.manager_id === userId ? 'manager' : 'participant',
         }));
 
         const { error: participantsError } = await supabase
@@ -368,13 +370,15 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
                                 <Checkbox
                                   checked={field.value?.includes(profile.id)}
                                   onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...(field.value || []), profile.id])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== profile.id
-                                          )
-                                        );
+                                    if (checked) {
+                                      return field.onChange([...(field.value || []), profile.id]);
+                                    }
+                                    if (form.getValues('manager_id') === profile.id) {
+                                      form.setValue('manager_id', '');
+                                    }
+                                    return field.onChange(
+                                      field.value?.filter((value) => value !== profile.id)
+                                    );
                                   }}
                                 />
                               </FormControl>
@@ -391,6 +395,47 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="manager_id"
+              render={({ field }) => {
+                const selected = form.watch('participants') || [];
+                const selectedProfiles = profiles.filter((p) => selected.includes(p.id));
+                return (
+                  <FormItem>
+                    <FormLabel>Manager du dossier (optionnel)</FormLabel>
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+                      disabled={selectedProfiles.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              selectedProfiles.length === 0
+                                ? 'Sélectionnez d\'abord des participants'
+                                : 'Aucun manager'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Aucun manager</SelectItem>
+                        {selectedProfiles.map((profile) => (
+                          <SelectItem key={profile.id} value={profile.id}>
+                            {profile.prenom} {profile.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button
