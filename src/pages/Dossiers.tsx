@@ -122,6 +122,23 @@ export default function Dossiers() {
 
       setDossiers((data as any) || []);
 
+      // Détecter les dossiers en retard (étape non terminée dont la date de fin prévue est dépassée)
+      const { data: lateSteps } = await supabase
+        .from('etapes_dossiers')
+        .select('dossier_id, status, date_fin_prevue')
+        .not('date_fin_prevue', 'is', null)
+        .lt('date_fin_prevue', new Date().toISOString());
+
+      setLateDossiers(
+        new Set(
+          (lateSteps || [])
+            .filter((s: any) => s.status !== 'termine' && s.status !== 'terminee')
+            .map((s: any) => s.dossier_id)
+        )
+      );
+
+
+
       // Fetch user assigned dossiers if user is not a collaborateur
       if (user?.id && !isCollaborateur) {
         // Get the profile ID first
