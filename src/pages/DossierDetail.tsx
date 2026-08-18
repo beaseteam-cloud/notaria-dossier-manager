@@ -76,6 +76,7 @@ interface DocumentDossier {
   fichier_nom?: string;
   date_upload: string;
   document_attendu_modele_id?: string;
+  etape_dossier_id?: string;
   type_mime?: string;
   taille_fichier?: number;
   description?: string;
@@ -317,9 +318,36 @@ export default function DossierDetail() {
     }
   };
 
+  const getMissingDocuments = (etapeId: string) => {
+    const etape = etapes.find(e => e.id === etapeId);
+    if (!etape) return [];
+    const attendus = documentsAttendus.filter(
+      d => d.etape_modele_id === etape.etape_modele_id && d.obligatoire
+    );
+    return attendus.filter(
+      d => !documentsUploads.some(
+        u => u.document_attendu_modele_id === d.id ||
+          (u.etape_dossier_id === etapeId && u.nom === d.nom)
+      )
+    );
+  };
+
   const updateEtapeStatus = async (etapeId: string, newStatus: string) => {
     try {
+      if (newStatus === 'termine') {
+        const missing = getMissingDocuments(etapeId);
+        if (missing.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "Documents manquants",
+            description: `Impossible de clôturer cette étape : ${missing.map(m => m.nom).join(', ')} ${missing.length > 1 ? 'doivent' : 'doit'} être téléversé${missing.length > 1 ? 's' : ''}.`,
+          });
+          return;
+        }
+      }
+
       const updates: any = { status: newStatus };
+
       
       if (newStatus === 'termine') {
         updates.date_fin_reelle = new Date().toISOString();
@@ -657,6 +685,12 @@ export default function DossierDetail() {
                         {etape.status === 'en_cours' && (
                           <Button
                             size="sm"
+                            disabled={getMissingDocuments(etape.id).length > 0}
+                            title={
+                              getMissingDocuments(etape.id).length > 0
+                                ? `Documents obligatoires manquants : ${getMissingDocuments(etape.id).map(d => d.nom).join(', ')}`
+                                : undefined
+                            }
                             onClick={() => updateEtapeStatus(etape.id, 'termine')}
                             className="flex items-center gap-1"
                           >
@@ -664,6 +698,7 @@ export default function DossierDetail() {
                             Terminer
                           </Button>
                         )}
+
                         {etape.status === 'termine' && (
                           <Button
                             size="sm"
