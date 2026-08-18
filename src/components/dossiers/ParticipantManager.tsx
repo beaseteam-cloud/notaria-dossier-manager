@@ -202,6 +202,63 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
     }
   };
 
+  const updateParticipantRole = async (participantId: string, newRole: string) => {
+    setLoading(true);
+    try {
+      // Un seul manager par dossier : rétrograder l'ancien
+      if (newRole === 'manager') {
+        const currentManager = participants.find(
+          (p) => p.role_dossier === 'manager' && p.id !== participantId
+        );
+        if (currentManager) {
+          const { error: demoteError } = await supabase
+            .from('dossier_participants')
+            .update({ role_dossier: 'responsable' })
+            .eq('id', currentManager.id);
+          if (demoteError) throw demoteError;
+        }
+      }
+
+      const { error } = await supabase
+        .from('dossier_participants')
+        .update({ role_dossier: newRole })
+        .eq('id', participantId);
+
+      if (error) throw error;
+
+      await fetchParticipants();
+      toast({ title: "Succès", description: "Fonction du participant mise à jour" });
+    } catch (error: any) {
+      console.error('Error updating participant role:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour de la fonction",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateParticipantNote = async (participantId: string, note: string) => {
+    try {
+      const { error } = await supabase
+        .from('dossier_participants')
+        .update({ note_mission: note || null })
+        .eq('id', participantId);
+
+      if (error) throw error;
+      await fetchParticipants();
+    } catch (error: any) {
+      console.error('Error updating note:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour de la note",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -214,29 +271,54 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
         {participants.map((participant) => (
           <div 
             key={participant.id} 
-            className="flex items-center justify-between p-3 border rounded-lg bg-muted/20"
+            className="flex items-start justify-between gap-3 p-3 border rounded-lg bg-muted/20"
           >
-            <div className="flex items-center gap-3">
-              <div>
+            <div className="flex-1 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <p className="font-medium">
                   {participant.profiles.prenom} {participant.profiles.nom}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {participant.profiles.email}
-                </p>
-                {participant.note_mission && (
-                  <p className="text-sm text-muted-foreground italic">
-                    Note: {participant.note_mission}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-2">
                 <Badge variant={getRoleBadgeVariant(participant.profiles.role)}>
                   {participant.profiles.role}
                 </Badge>
-                <Badge variant={participant.role_dossier === 'manager' ? 'default' : 'outline'}>
-                  {participant.role_dossier === 'manager' ? 'Manager' : participant.role_dossier}
-                </Badge>
+                {participant.role_dossier === 'manager' && (
+                  <Badge variant="default">Manager du dossier</Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {participant.profiles.email}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Fonction dans le dossier</Label>
+                  <Select
+                    value={participant.role_dossier}
+                    onValueChange={(value) => updateParticipantRole(participant.id, value)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une fonction" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manager">Manager (en charge)</SelectItem>
+                      <SelectItem value="responsable">Responsable</SelectItem>
+                      <SelectItem value="assistant">Assistant</SelectItem>
+                      <SelectItem value="observateur">Observateur</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Note de mission</Label>
+                  <Input
+                    defaultValue={participant.note_mission || ''}
+                    placeholder="Note optionnelle"
+                    onBlur={(e) => {
+                      if ((participant.note_mission || '') !== e.target.value) {
+                        updateParticipantNote(participant.id, e.target.value);
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
             <Button
@@ -250,6 +332,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
             </Button>
           </div>
         ))}
+
         
         {participants.length === 0 && (
           <p className="text-muted-foreground text-center py-4">
