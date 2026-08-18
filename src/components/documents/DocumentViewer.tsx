@@ -62,8 +62,14 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
         throw signedUrlError;
       }
 
-      setSignedPreviewUrl(signedUrlData.signedUrl);
-      setIsOpen(true);
+      if (isInlineViewable) {
+        setSignedPreviewUrl(signedUrlData.signedUrl);
+        setIsOpen(true);
+      } else {
+        // Types non affichables dans le navigateur : ouverture dans un nouvel onglet
+        window.open(signedUrlData.signedUrl, '_blank', 'noopener,noreferrer');
+      }
+
     } catch (error) {
       console.error('Preview error:', error);
       toast({
