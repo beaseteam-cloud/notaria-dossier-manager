@@ -151,12 +151,12 @@ export default function DossierDetail() {
         setCreateurNom(createurData ? `${createurData.prenom} ${createurData.nom}` : null);
       }
 
-      // Manager du dossier (participant avec le rôle manager)
+      // Responsable du dossier
       const { data: managerData } = await supabase
         .from('dossier_participants')
         .select('user_id')
         .eq('dossier_id', id)
-        .eq('role_dossier', 'manager')
+        .eq('role_dossier', 'responsable')
         .maybeSingle();
 
       if (managerData?.user_id) {
@@ -653,7 +653,7 @@ export default function DossierDetail() {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Manager</span>
+              <span className="text-sm text-muted-foreground">Responsable</span>
               <span className="text-sm font-medium">{managerNom ?? 'Non défini'}</span>
             </div>
           </div>

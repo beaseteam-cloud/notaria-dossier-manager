@@ -162,7 +162,7 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
         const participantsData = values.participants.map(userId => ({
           dossier_id: dossier.id,
           user_id: userId,
-          role_dossier: values.manager_id === userId ? 'manager' : 'participant',
+          role_dossier: values.manager_id === userId ? 'responsable' : 'participant',
         }));
 
         const { error: participantsError } = await supabase
@@ -404,7 +404,7 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
                 const selectedProfiles = profiles.filter((p) => selected.includes(p.id));
                 return (
                   <FormItem>
-                    <FormLabel>Manager du dossier (optionnel)</FormLabel>
+                    <FormLabel>Responsable du dossier (optionnel)</FormLabel>
                     <Select
                       value={field.value || 'none'}
                       onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
@@ -416,13 +416,13 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
                             placeholder={
                               selectedProfiles.length === 0
                                 ? 'Sélectionnez d\'abord des participants'
-                                : 'Aucun manager'
+                                : 'Aucun responsable'
                             }
                           />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Aucun manager</SelectItem>
+                        <SelectItem value="none">Aucun responsable</SelectItem>
                         {selectedProfiles.map((profile) => (
                           <SelectItem key={profile.id} value={profile.id}>
                             {profile.prenom} {profile.nom}

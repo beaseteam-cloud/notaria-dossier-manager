@@ -205,10 +205,10 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
   const updateParticipantRole = async (participantId: string, newRole: string) => {
     setLoading(true);
     try {
-      // Un seul manager par dossier : rétrograder l'ancien
-      if (newRole === 'manager') {
+      // Un seul responsable par dossier : rétrograder l'ancien
+      if (newRole === 'responsable') {
         const currentManager = participants.find(
-          (p) => p.role_dossier === 'manager' && p.id !== participantId
+          (p) => p.role_dossier === 'responsable' && p.id !== participantId
         );
         if (currentManager) {
           const { error: demoteError } = await supabase
@@ -281,8 +281,8 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
                 <Badge variant={getRoleBadgeVariant(participant.profiles.role)}>
                   {participant.profiles.role}
                 </Badge>
-                {participant.role_dossier === 'manager' && (
-                  <Badge variant="default">Manager du dossier</Badge>
+                {participant.role_dossier === 'responsable' && (
+                  <Badge variant="default">Responsable du dossier</Badge>
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
@@ -300,7 +300,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
                       <SelectValue placeholder="Sélectionner une fonction" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="manager">Manager (en charge)</SelectItem>
+                      <SelectItem value="responsable">Responsable (en charge)</SelectItem>
                       <SelectItem value="participant">Participant</SelectItem>
                       <SelectItem value="assistant">Assistant</SelectItem>
                       <SelectItem value="observateur">Observateur</SelectItem>
@@ -377,7 +377,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
                 <SelectValue placeholder="Sélectionner un rôle" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="responsable">Responsable</SelectItem>
                 <SelectItem value="participant">Participant</SelectItem>
                 <SelectItem value="assistant">Assistant</SelectItem>
                 <SelectItem value="observateur">Observateur</SelectItem>
