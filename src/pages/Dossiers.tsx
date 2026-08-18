@@ -71,6 +71,7 @@ export default function Dossiers() {
   const [dossierToDelete, setDossierToDelete] = useState<Dossier | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [userAssignedDossiers, setUserAssignedDossiers] = useState<Set<string>>(new Set());
+  const [lateDossiers, setLateDossiers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchDossiers();
