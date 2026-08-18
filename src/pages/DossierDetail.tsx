@@ -37,6 +37,7 @@ interface DossierDetail {
   status: 'en_cours' | 'termine' | 'suspendu';
   pourcentage_completion: number;
   date_creation: string;
+  created_by?: string;
   montant_frais?: number;
   procedure_modeles?: {
     nom: string;
@@ -96,6 +97,8 @@ export default function DossierDetail() {
   const [editingDocumentNotes, setEditingDocumentNotes] = useState<string | null>(null);
   const [tempNotes, setTempNotes] = useState<string>('');
   const [isAssignedUser, setIsAssignedUser] = useState(false);
+  const [createurNom, setCreateurNom] = useState<string | null>(null);
+  const [managerNom, setManagerNom] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -117,6 +120,7 @@ export default function DossierDetail() {
           status,
           pourcentage_completion,
           date_creation,
+          created_by,
           montant_frais,
           procedure_modeles(nom)
         `)
@@ -136,6 +140,35 @@ export default function DossierDetail() {
       }
       
       setDossier(dossierData);
+
+      // Créateur du dossier
+      if (dossierData.created_by) {
+        const { data: createurData } = await supabase
+          .from('profiles')
+          .select('nom, prenom')
+          .or(`user_id.eq.${dossierData.created_by},id.eq.${dossierData.created_by}`)
+          .maybeSingle();
+        setCreateurNom(createurData ? `${createurData.prenom} ${createurData.nom}` : null);
+      }
+
+      // Manager du dossier (participant avec le rôle manager)
+      const { data: managerData } = await supabase
+        .from('dossier_participants')
+        .select('user_id')
+        .eq('dossier_id', id)
+        .eq('role_dossier', 'manager')
+        .maybeSingle();
+
+      if (managerData?.user_id) {
+        const { data: managerProfile } = await supabase
+          .from('profiles')
+          .select('nom, prenom')
+          .or(`user_id.eq.${managerData.user_id},id.eq.${managerData.user_id}`)
+          .maybeSingle();
+        setManagerNom(managerProfile ? `${managerProfile.prenom} ${managerProfile.nom}` : null);
+      } else {
+        setManagerNom(null);
+      }
 
       // Fetch etapes for this dossier
       const { data: etapesData, error: etapesError } = await supabase
@@ -612,6 +645,16 @@ export default function DossierDetail() {
             <div className="flex items-center gap-2">
               <span className="text-sm">Statut:</span>
               {getDossierStatusBadge(dossier.status)}
+            </div>
+            {createurNom && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Créé par</span>
+                <span className="text-sm font-medium">{createurNom}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Manager</span>
+              <span className="text-sm font-medium">{managerNom ?? 'Non défini'}</span>
             </div>
           </div>
           {dossier.montant_frais && (
