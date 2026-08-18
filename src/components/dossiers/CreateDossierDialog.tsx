@@ -162,7 +162,7 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
         const participantsData = values.participants.map(userId => ({
           dossier_id: dossier.id,
           user_id: userId,
-          role_dossier: 'participant',
+          role_dossier: values.manager_id === userId ? 'manager' : 'participant',
         }));
 
         const { error: participantsError } = await supabase
