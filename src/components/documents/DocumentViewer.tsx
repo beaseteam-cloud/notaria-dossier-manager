@@ -42,7 +42,10 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
   const isImage = mimeType?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(extension);
   const isPdf = mimeType === 'application/pdf' || extension === 'pdf';
   const isText = mimeType?.startsWith('text/') || ['txt', 'csv', 'json', 'md'].includes(extension);
-  const isInlineViewable = isImage || isPdf || isText;
+  // Documents Office : rendus via la visionneuse Office Online (nécessite un accès internet)
+  const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension);
+  const isInlineViewable = isImage || isPdf || isText || isOffice;
+
 
   const handlePreview = async () => {
     if (!fileUrl) return;
@@ -213,11 +216,27 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
                       className="max-w-full h-auto"
                     />
                   ) : (
-                    <iframe
-                      src={signedPreviewUrl}
-                      className="w-full h-[65vh]"
-                      title={fileName}
-                    />
+                    <div className="space-y-2">
+                      <iframe
+                        src={isOffice
+                          ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(signedPreviewUrl)}`
+                          : signedPreviewUrl}
+                        className="w-full h-[65vh]"
+                        title={fileName}
+                      />
+                      {isOffice && (
+                        <p className="text-xs text-muted-foreground">
+                          Aperçu fourni par la visionneuse Office Online.{' '}
+                          <button
+                            type="button"
+                            className="underline"
+                            onClick={() => window.open(signedPreviewUrl, '_blank', 'noopener,noreferrer')}
+                          >
+                            Ouvrir le fichier dans un nouvel onglet
+                          </button>
+                        </p>
+                      )}
+                    </div>
                   )
                 ) : (
                   <div className="text-center py-8">
@@ -227,6 +246,7 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
               </div>
             </DialogContent>
           </Dialog>
+
         </>
 
       )}
