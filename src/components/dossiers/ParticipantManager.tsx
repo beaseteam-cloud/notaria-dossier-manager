@@ -234,8 +234,8 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
                 <Badge variant={getRoleBadgeVariant(participant.profiles.role)}>
                   {participant.profiles.role}
                 </Badge>
-                <Badge variant="outline">
-                  {participant.role_dossier}
+                <Badge variant={participant.role_dossier === 'manager' ? 'default' : 'outline'}>
+                  {participant.role_dossier === 'manager' ? 'Manager' : participant.role_dossier}
                 </Badge>
               </div>
             </div>
@@ -294,6 +294,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
                 <SelectValue placeholder="Sélectionner un rôle" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="responsable">Responsable</SelectItem>
                 <SelectItem value="assistant">Assistant</SelectItem>
                 <SelectItem value="observateur">Observateur</SelectItem>
