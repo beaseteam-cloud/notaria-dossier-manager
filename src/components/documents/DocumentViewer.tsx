@@ -186,12 +186,11 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
     }
   };
 
-  const canPreview = mimeType?.startsWith('image/') || mimeType === 'application/pdf';
   const showDeleteButton = canDelete && isCollaborateur;
 
   return (
     <div className="flex items-center gap-2">
-      {canPreview && (
+      {fileUrl && (
         <>
           <Button size="sm" variant="ghost" onClick={handlePreview} disabled={loadingPreview}>
             <Eye className="w-3 h-3 mr-1" />
@@ -207,23 +206,18 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
               </DialogHeader>
               <div className="flex-1 overflow-auto">
                 {signedPreviewUrl ? (
-                  mimeType?.startsWith('image/') ? (
+                  isImage ? (
                     <img
                       src={signedPreviewUrl}
                       alt={fileName}
                       className="max-w-full h-auto"
                     />
-                  ) : mimeType === 'application/pdf' ? (
+                  ) : (
                     <iframe
                       src={signedPreviewUrl}
-                      className="w-full h-96"
+                      className="w-full h-[65vh]"
                       title={fileName}
                     />
-                  ) : (
-                    <div className="text-center py-8">
-                      <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
-                      <p>Aperçu non disponible pour ce type de fichier</p>
-                    </div>
                   )
                 ) : (
                   <div className="text-center py-8">
@@ -234,6 +228,7 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
             </DialogContent>
           </Dialog>
         </>
+
       )}
       
       <Button size="sm" variant="ghost" onClick={handleDownload}>
