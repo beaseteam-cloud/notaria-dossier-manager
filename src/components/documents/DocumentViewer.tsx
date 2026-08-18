@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Eye, Download, FileText, Trash2 } from 'lucide-react';
+import { Eye, Download, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,8 +37,16 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
     return storedUrl;
   };
 
+  // Infer type from extension when mimeType is missing/incorrect
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  const isImage = mimeType?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(extension);
+  const isPdf = mimeType === 'application/pdf' || extension === 'pdf';
+  const isText = mimeType?.startsWith('text/') || ['txt', 'csv', 'json', 'md'].includes(extension);
+  const isInlineViewable = isImage || isPdf || isText;
+
   const handlePreview = async () => {
     if (!fileUrl) return;
+
 
     setLoadingPreview(true);
     try {
@@ -54,8 +62,14 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
         throw signedUrlError;
       }
 
-      setSignedPreviewUrl(signedUrlData.signedUrl);
-      setIsOpen(true);
+      if (isInlineViewable) {
+        setSignedPreviewUrl(signedUrlData.signedUrl);
+        setIsOpen(true);
+      } else {
+        // Types non affichables dans le navigateur : ouverture dans un nouvel onglet
+        window.open(signedUrlData.signedUrl, '_blank', 'noopener,noreferrer');
+      }
+
     } catch (error) {
       console.error('Preview error:', error);
       toast({
@@ -172,12 +186,11 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
     }
   };
 
-  const canPreview = mimeType?.startsWith('image/') || mimeType === 'application/pdf';
   const showDeleteButton = canDelete && isCollaborateur;
 
   return (
     <div className="flex items-center gap-2">
-      {canPreview && (
+      {fileUrl && (
         <>
           <Button size="sm" variant="ghost" onClick={handlePreview} disabled={loadingPreview}>
             <Eye className="w-3 h-3 mr-1" />
@@ -193,23 +206,18 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
               </DialogHeader>
               <div className="flex-1 overflow-auto">
                 {signedPreviewUrl ? (
-                  mimeType?.startsWith('image/') ? (
+                  isImage ? (
                     <img
                       src={signedPreviewUrl}
                       alt={fileName}
                       className="max-w-full h-auto"
                     />
-                  ) : mimeType === 'application/pdf' ? (
+                  ) : (
                     <iframe
                       src={signedPreviewUrl}
-                      className="w-full h-96"
+                      className="w-full h-[65vh]"
                       title={fileName}
                     />
-                  ) : (
-                    <div className="text-center py-8">
-                      <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
-                      <p>Aperçu non disponible pour ce type de fichier</p>
-                    </div>
                   )
                 ) : (
                   <div className="text-center py-8">
@@ -220,6 +228,7 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
             </DialogContent>
           </Dialog>
         </>
+
       )}
       
       <Button size="sm" variant="ghost" onClick={handleDownload}>
