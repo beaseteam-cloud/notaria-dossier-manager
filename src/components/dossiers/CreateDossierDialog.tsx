@@ -43,6 +43,7 @@ const formSchema = z.object({
   client_adresse: z.string().optional(),
   procedure_modele_id: z.string().min(1, 'Le modèle de procédure est obligatoire'),
   participants: z.array(z.string()).optional(),
+  manager_id: z.string().optional(),
 });
 
 interface ProcedureModele {
