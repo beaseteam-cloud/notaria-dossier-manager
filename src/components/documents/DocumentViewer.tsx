@@ -37,8 +37,16 @@ export function DocumentViewer({ documentId, fileName, fileUrl, mimeType, canDel
     return storedUrl;
   };
 
+  // Infer type from extension when mimeType is missing/incorrect
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  const isImage = mimeType?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(extension);
+  const isPdf = mimeType === 'application/pdf' || extension === 'pdf';
+  const isText = mimeType?.startsWith('text/') || ['txt', 'csv', 'json', 'md'].includes(extension);
+  const isInlineViewable = isImage || isPdf || isText;
+
   const handlePreview = async () => {
     if (!fileUrl) return;
+
 
     setLoadingPreview(true);
     try {
