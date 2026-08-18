@@ -14,7 +14,8 @@ import {
   Trash,
   Calendar,
   User,
-  Euro
+  Euro,
+  AlertTriangle
 } from 'lucide-react';
 import { CreateDossierDialog } from '@/components/dossiers/CreateDossierDialog';
 import { EditDossierDialog } from '@/components/dossiers/EditDossierDialog';
