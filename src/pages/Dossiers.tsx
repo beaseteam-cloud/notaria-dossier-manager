@@ -331,6 +331,12 @@ export default function Dossiers() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {lateDossiers.has(dossier.id) && dossier.status !== 'termine' && (
+                        <Badge variant="destructive" className="flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          En retard
+                        </Badge>
+                      )}
                       {getStatusBadge(dossier.status)}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
