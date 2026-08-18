@@ -81,6 +81,7 @@ export function CreateDossierDialog({ onDossierCreated }: CreateDossierDialogPro
       client_adresse: '',
       procedure_modele_id: '',
       participants: [],
+      manager_id: '',
     },
   });
 
