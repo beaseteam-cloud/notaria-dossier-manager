@@ -685,6 +685,12 @@ export default function DossierDetail() {
                         {etape.status === 'en_cours' && (
                           <Button
                             size="sm"
+                            disabled={getMissingDocuments(etape.id).length > 0}
+                            title={
+                              getMissingDocuments(etape.id).length > 0
+                                ? `Documents obligatoires manquants : ${getMissingDocuments(etape.id).map(d => d.nom).join(', ')}`
+                                : undefined
+                            }
                             onClick={() => updateEtapeStatus(etape.id, 'termine')}
                             className="flex items-center gap-1"
                           >
@@ -692,6 +698,7 @@ export default function DossierDetail() {
                             Terminer
                           </Button>
                         )}
+
                         {etape.status === 'termine' && (
                           <Button
                             size="sm"
