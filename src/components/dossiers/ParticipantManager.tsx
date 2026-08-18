@@ -213,7 +213,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
         if (currentManager) {
           const { error: demoteError } = await supabase
             .from('dossier_participants')
-            .update({ role_dossier: 'responsable' })
+            .update({ role_dossier: 'participant' })
             .eq('id', currentManager.id);
           if (demoteError) throw demoteError;
         }
@@ -301,7 +301,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="manager">Manager (en charge)</SelectItem>
-                      <SelectItem value="responsable">Responsable</SelectItem>
+                      <SelectItem value="participant">Participant</SelectItem>
                       <SelectItem value="assistant">Assistant</SelectItem>
                       <SelectItem value="observateur">Observateur</SelectItem>
                     </SelectContent>
@@ -378,7 +378,7 @@ export function ParticipantManager({ dossierId }: ParticipantManagerProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="responsable">Responsable</SelectItem>
+                <SelectItem value="participant">Participant</SelectItem>
                 <SelectItem value="assistant">Assistant</SelectItem>
                 <SelectItem value="observateur">Observateur</SelectItem>
               </SelectContent>
